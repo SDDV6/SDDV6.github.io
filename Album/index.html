@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#080808">
+<title>Maison Mines Nancy</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Lato:wght@100;300;400&display=swap" rel="stylesheet">
+
+<style>
+/* ════════════════════════════════════════════════
+   RESET & BASE
+════════════════════════════════════════════════ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --gold:       #d4b483;
+  --gold-bright:#e8cfa0;
+  --cream:      #f8ecdc;
+  --dark:       #060606;
+  --coc:        #8b6f3e;
+  --ease-soft:  cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: var(--dark);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ════════════════════════════════════════════════
+   LOADER
+════════════════════════════════════════════════ */
+#loader {
+  position: fixed; inset: 0;
+  background: radial-gradient(ellipse at center, #131008 0%, var(--dark) 70%);
+  z-index: 90;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 1.1rem;
+  animation: loaderFadeOut 1.3s var(--ease-soft) 3.2s forwards;
+}
+@keyframes loaderFadeOut { to { opacity: 0; pointer-events: none; visibility: hidden; } }
+
+.l-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.6rem, 12vw, 6rem);
+  font-weight: 600; font-style: italic;
+  color: var(--cream);
+  letter-spacing: .01em; text-align: center;
+  text-shadow: 0 0 50px rgba(212,180,131,.35), 0 4px 40px rgba(0,0,0,.8);
+  animation: heroReveal 1.6s var(--ease-soft) .3s both;
+}
+.l-sub {
+  font-family: 'Lato', sans-serif;
+  font-size: clamp(.55rem, 2vw, .78rem);
+  font-weight: 300; letter-spacing: .62em;
+  text-transform: uppercase; color: var(--gold-bright);
+  animation: fadeUp 1.4s var(--ease-soft) .9s both;
+}
+.l-line {
+  width: 0; height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold-bright), transparent);
+  box-shadow: 0 0 12px rgba(212,180,131,.6);
+  animation: growLine 1.5s var(--ease-soft) 1.4s forwards;
+  margin-top: .3rem;
+}
+@keyframes growLine  { to { width: 180px; } }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes heroReveal {
+  from { opacity: 0; transform: translateY(40px) scale(.92); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);   }
+}
+
+/* ════════════════════════════════════════════════
+   SCREENS (routage menu / album / clip farm)
+════════════════════════════════════════════════ */
+.screen {
+  position: fixed; inset: 0; z-index: 60;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity .7s var(--ease-soft), transform .7s var(--ease-soft);
+}
+.screen.on { opacity: 1; visibility: visible; pointer-events: auto; }
+
+#album-view {
+  position: fixed; inset: 0;
+  opacity: 0; visibility: hidden;
+  transition: opacity .7s var(--ease-soft);
+}
+#album-view.on { opacity: 1; visibility: visible; }
+
+/* ════════════════════════════════════════════════
+   MENU D'ACCUEIL
+════════════════════════════════════════════════ */
+#home {
+  background: radial-gradient(ellipse at 50% 35%, #16110a 0%, #070707 72%);
+  display: flex; align-items: center; justify-content: center;
+  padding: calc(env(safe-area-inset-top,0px) + 1.2rem) 1.2rem
+           calc(env(safe-area-inset-bottom,0px) + 5.2rem);
+}
+
+/* — photos flottantes (compositeur uniquement = ultra léger) — */
+.home-bg { position: absolute; inset: 0; overflow: hidden; z-index: 0; pointer-events: none; }
+.float-photo {
+  position: absolute;
+  width: clamp(94px, 23vw, 155px);
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: 10px;
+  opacity: .42;                                  /* plus clair qu'avant (.16) */
+  filter: blur(1.5px) saturate(1.15) brightness(1.18);
+  box-shadow: 0 14px 44px rgba(0,0,0,.45);
+  will-change: transform;
+  left: -190px;                                  /* départ hors écran (gauche) par défaut */
+}
+/* lanes verticales — les unes traversent vers la droite, les autres vers la gauche */
+.fp1 { top: 3%;  animation: crossR 40s linear  -3s  infinite; }
+.fp2 { top: 20%; left: auto; right: -190px; animation: crossL 48s linear -18s infinite; }
+.fp3 { top: 38%; animation: crossR 54s linear -32s infinite; }
+.fp4 { top: 55%; left: auto; right: -190px; animation: crossL 44s linear  -9s infinite; }
+.fp5 { top: 68%; animation: crossR 50s linear -26s infinite; }
+.fp6 { top: 28%; left: auto; right: -190px; animation: crossL 58s linear -44s infinite; }
+.fp7 { top: 82%; animation: crossR 46s linear -13s infinite; }
+@keyframes crossR {
+  from { transform: translate3d(0, 0, 0) rotate(-2deg); }
+  to   { transform: translate3d(calc(100vw + 380px), -22px, 0) rotate(3deg); }
+}
+@keyframes crossL {
+  from { transform: translate3d(0, 0, 0) rotate(2deg); }
+  to   { transform: translate3d(calc(-100vw - 380px), 22px, 0) rotate(-3deg); }
+}
+
+/* scrim pour la lisibilité du texte par-dessus les photos */
+.home-scrim {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  /* plus clair sur les bords pour laisser respirer les photos, un peu plus
+     dense derrière le titre (au centre) pour garder le texte lisible */
+  background: radial-gradient(ellipse at 50% 42%, rgba(7,7,7,.55) 0%, rgba(7,7,7,.42) 55%, rgba(7,7,7,.5) 100%);
+}
+
+.home-content {
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; max-width: 680px; width: 100%;
+}
+.home-kicker {
+  font-family: 'Lato', sans-serif;
+  font-size: clamp(.6rem, 2.2vw, .82rem);
+  font-weight: 300; letter-spacing: .34em; text-transform: uppercase;
+  color: var(--gold-bright);
+  animation: fadeUp 1s var(--ease-soft) .2s both;
+}
+.home-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(3.4rem, 15vw, 7.5rem);
+  font-weight: 700; font-style: italic;
+  color: var(--cream); line-height: .95; margin: .15em 0 .35em;
+  text-shadow: 0 0 60px rgba(212,180,131,.38), 0 6px 50px rgba(0,0,0,.85);
+  animation: heroReveal 1.4s var(--ease-soft) .35s both;
+}
+.home-sub {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(1rem, 3vw, 1.35rem);
+  font-style: italic; font-weight: 500;
+  color: rgba(248,236,220,.82);
+  animation: fadeUp 1.1s var(--ease-soft) .55s both;
+}
+.home-insic {
+  margin-top: 1rem;
+  font-family: 'Lato', sans-serif;
+  font-size: clamp(.62rem, 2.3vw, .82rem);
+  font-weight: 400; letter-spacing: .28em; text-transform: uppercase;
+  color: var(--gold);
+  padding: .45rem 1rem;
+  border: 1px solid rgba(212,180,131,.28);
+  border-radius: 100px;
+  animation: fadeUp 1.1s var(--ease-soft) .75s both;
+}
+
+/* — cartes de choix — */
+.home-cards {
+  margin-top: clamp(2rem, 6vh, 3.2rem);
+  display: flex; gap: 1.1rem; width: 100%;
+  justify-content: center; flex-wrap: wrap;
+  animation: fadeUp 1.2s var(--ease-soft) .95s both;
+}
+.card {
+  position: relative;
+  flex: 1 1 240px; max-width: 290px;
+  padding: 1.5rem 1.4rem;
+  background: rgba(20,17,12,.55);
+  border: 1px solid rgba(212,180,131,.25);
+  border-radius: 14px;
+  cursor: pointer; overflow: hidden;
+  transition: transform .4s var(--ease-soft), border-color .4s var(--ease-soft),
+              background .4s var(--ease-soft), box-shadow .4s var(--ease-soft);
+}
+.card::after {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(212,180,131,.14), transparent 70%);
+  opacity: 0; transition: opacity .4s var(--ease-soft);
+}
+.card:hover, .card:active {
+  transform: translateY(-4px);
+  border-color: rgba(212,180,131,.6);
+  background: rgba(28,23,15,.7);
+  box-shadow: 0 18px 50px rgba(0,0,0,.5);
+}
+.card:hover::after { opacity: 1; }
+.card-icon { font-size: 1.6rem; margin-bottom: .55rem; }
+.card-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem; font-weight: 600; font-style: italic;
+  color: var(--cream);
+}
+.card-desc {
+  margin-top: .3rem;
+  font-family: 'Lato', sans-serif;
+  font-size: .68rem; font-weight: 300; letter-spacing: .12em;
+  text-transform: uppercase; color: rgba(248,236,220,.55);
+}
+.card-badge {
+  position: absolute; top: .85rem; right: .85rem;
+  font-family: 'Lato', sans-serif;
+  font-size: .5rem; font-weight: 400; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--dark); background: var(--gold-bright);
+  padding: .2rem .5rem; border-radius: 100px;
+}
+
+/* ════════════════════════════════════════════════
+   VUE CLIP FARM (à venir)
+════════════════════════════════════════════════ */
+#clip {
+  background: radial-gradient(ellipse at 50% 40%, #16110a 0%, #070707 72%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 1.5rem;
+}
+.clip-emoji { font-size: clamp(2.6rem, 9vw, 4rem); animation: fadeUp 1s var(--ease-soft) .1s both; }
+.clip-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.6rem, 12vw, 5.5rem);
+  font-weight: 700; font-style: italic; color: var(--cream);
+  margin: .2em 0 .25em; line-height: 1;
+  text-shadow: 0 0 50px rgba(212,180,131,.3);
+  animation: heroReveal 1.3s var(--ease-soft) .25s both;
+}
+.clip-msg {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(1.1rem, 3.4vw, 1.5rem); font-style: italic;
+  color: rgba(248,236,220,.8); max-width: 480px; line-height: 1.5;
+  animation: fadeUp 1.1s var(--ease-soft) .5s both;
+}
+.clip-tag {
+  margin-top: 1.4rem;
+  font-family: 'Lato', sans-serif;
+  font-size: .62rem; font-weight: 300; letter-spacing: .42em; text-transform: uppercase;
+  color: var(--gold-bright);
+  animation: fadeUp 1.1s var(--ease-soft) .7s both;
+}
+
+/* ════════════════════════════════════════════════
+   BOUTON RETOUR MENU
+════════════════════════════════════════════════ */
+.back-btn {
+  position: fixed; z-index: 30;
+  top: calc(env(safe-area-inset-top,0px) + 1rem);
+  left: calc(env(safe-area-inset-left,0px) + 1.1rem);
+  display: flex; align-items: center; gap: .45rem;
+  padding: .5rem .9rem .5rem .7rem;
+  background: rgba(10,9,7,.6);
+  border: 1px solid rgba(212,180,131,.3);
+  border-radius: 100px;
+  color: var(--gold-bright);
+  font-family: 'Lato', sans-serif;
+  font-size: .58rem; font-weight: 300; letter-spacing: .25em; text-transform: uppercase;
+  cursor: pointer;
+  transition: background .35s var(--ease-soft), border-color .35s var(--ease-soft), transform .35s var(--ease-soft);
+  pointer-events: auto;
+}
+.back-btn:hover { background: rgba(212,180,131,.14); border-color: var(--gold); transform: translateX(-3px); }
+.back-btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+
+/* ════════════════════════════════════════════════
+   BOUTON UPLOAD (dans l'album uniquement)
+════════════════════════════════════════════════ */
+#upload-btn {
+  position: fixed; z-index: 30;
+  top: calc(env(safe-area-inset-top,0px) + 1rem);
+  left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: .4rem;
+  padding: .5rem 1rem;
+  background: rgba(10,9,7,.6);
+  border: 1px solid rgba(212,180,131,.32);
+  border-radius: 100px;
+  color: var(--gold-bright);
+  font-family: 'Lato', sans-serif;
+  font-size: .58rem; font-weight: 400; letter-spacing: .16em; text-transform: uppercase;
+  cursor: pointer; white-space: nowrap;
+  transition: background .35s var(--ease-soft), border-color .35s var(--ease-soft), color .35s var(--ease-soft);
+  pointer-events: auto;
+}
+#upload-btn:hover { background: rgba(212,180,131,.14); border-color: var(--gold); }
+#upload-btn .upload-plus { font-size: .85rem; line-height: 1; }
+#upload-btn.busy { opacity: .8; cursor: default; }
+#upload-btn.ok   { border-color: #8fd19e; color: #b9eec4; }
+#upload-btn.err  { border-color: #e08a8a; color: #f2b8b8; }
+.idle #upload-btn { opacity: .25; }
+@media (max-width: 460px) {
+  #upload-btn .upload-label { display: none; }
+  #upload-btn { padding: .55rem .7rem; }
+}
+
+/* ════════════════════════════════════════════════
+   INDICATEUR "LA VIDÉO CHARGE" (derrière la vidéo)
+════════════════════════════════════════════════ */
+.vid-loading {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Lato', sans-serif; font-size: .62rem; font-weight: 300;
+  letter-spacing: .3em; text-transform: uppercase;
+  color: rgba(232,207,160,.75); pointer-events: none; text-align: center;
+  animation: loadPulse 1.6s ease infinite;
+}
+@keyframes loadPulse { 0%, 100% { opacity: .35; } 50% { opacity: .9; } }
+
+/* ════════════════════════════════════════════════
+   BOUTON + GRILLE VUE D'ENSEMBLE
+════════════════════════════════════════════════ */
+.bottom-left { display: flex; align-items: center; gap: .65rem; }
+#ov-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; flex-shrink: 0;
+  background: rgba(10,9,7,.6);
+  border: 1px solid rgba(212,180,131,.3);
+  border-radius: 9px; cursor: pointer; pointer-events: auto;
+  transition: background .3s var(--ease-soft), border-color .3s var(--ease-soft);
+}
+#ov-btn:hover { background: rgba(212,180,131,.14); border-color: var(--gold); }
+#ov-btn svg { width: 16px; height: 16px; fill: var(--gold-bright); }
+
+#overview {
+  position: fixed; inset: 0; z-index: 80;
+  background: rgba(6,6,6,.97);
+  display: flex; flex-direction: column;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity .4s var(--ease-soft);
+}
+#overview.on { opacity: 1; visibility: visible; pointer-events: auto; }
+.ov-head {
+  flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: calc(env(safe-area-inset-top,0px) + 1rem) clamp(1rem,4vw,2rem) 1rem;
+}
+.ov-title {
+  font-family: 'Playfair Display', serif; font-style: italic;
+  font-size: clamp(1.3rem, 5vw, 1.7rem); color: var(--cream);
+}
+#ov-close {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(10,9,7,.6); border: 1px solid rgba(212,180,131,.3);
+  color: var(--gold-bright); font-size: 1rem; cursor: pointer; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .3s, border-color .3s;
+}
+#ov-close:hover { background: rgba(212,180,131,.14); border-color: var(--gold); }
+.ov-grid {
+  flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px;
+  padding: 0 clamp(1rem,4vw,2rem) calc(env(safe-area-inset-bottom,0px) + 1.5rem);
+}
+.ov-cell {
+  position: relative; aspect-ratio: 1 / 1;  /* carré (la hauteur est aussi forcée en JS) */
+  border-radius: 9px; overflow: hidden;
+  cursor: pointer; background: #161310; border: 1.5px solid transparent;
+  transition: border-color .22s var(--ease-soft);
+}
+.ov-cell:hover { border-color: rgba(212,180,131,.55); }
+.ov-cell.current { border-color: var(--gold-bright); box-shadow: 0 0 0 2px rgba(212,180,131,.45); }
+.ov-cell img, .ov-cell .ov-vid {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; display: block;
+}
+.ov-vid {
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle, #1d1812, #0b0a08);
+  color: var(--gold-bright); font-size: 1.3rem;
+}
+.ov-num {
+  position: absolute; bottom: 3px; right: 5px;
+  font-family: 'Lato', sans-serif; font-size: .5rem; font-weight: 300;
+  color: rgba(255,255,255,.75); text-shadow: 0 1px 3px rgba(0,0,0,.9);
+}
+
+/* ════════════════════════════════════════════════
+   BOUTON CLASH OF CLANS (global, toutes pages)
+════════════════════════════════════════════════ */
+#coc-btn {
+  position: fixed; z-index: 70;
+  bottom: calc(env(safe-area-inset-bottom,0px) + 1rem);
+  left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: .5rem;
+  padding: .55rem 1.1rem;
+  background: linear-gradient(180deg, #3a4a63, #232f42);
+  border: 1px solid rgba(232,207,160,.5);
+  border-radius: 100px;
+  color: #ffe9b0;
+  font-family: 'Lato', sans-serif;
+  font-size: .62rem; font-weight: 400; letter-spacing: .14em; text-transform: uppercase;
+  text-decoration: none; white-space: nowrap;
+  box-shadow: 0 6px 22px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.12);
+  transition: transform .3s var(--ease-soft), box-shadow .3s var(--ease-soft), filter .3s var(--ease-soft);
+}
+#coc-btn:hover { transform: translateX(-50%) translateY(-3px) scale(1.03); filter: brightness(1.12); box-shadow: 0 10px 28px rgba(0,0,0,.55); }
+#coc-btn:active { transform: translateX(-50%) translateY(-1px) scale(.98); }
+#coc-btn .coc-icon { height: 22px; width: auto; display: block; filter: drop-shadow(0 1px 3px rgba(0,0,0,.55)); }
+
+/* ════════════════════════════════════════════════
+   SLIDESHOW
+════════════════════════════════════════════════ */
+#slideshow { position: fixed; inset: 0; }
+
+.slide {
+  position: absolute; inset: 0;
+  opacity: 0;
+  transition: opacity .85s var(--ease-soft);
+  overflow: hidden;
+}
+.slide.active { opacity: 1; z-index: 2; }
+
+/* Fond flouté peint uniquement pour la photo visible */
+.slide:not(.active):not(.leaving) .slide-bg-blur { display: none; }
+.slide-bg-blur {
+  position: absolute; inset: -50px;
+  width: calc(100% + 100px); height: calc(100% + 100px);
+  object-fit: cover;
+  filter: blur(22px) brightness(0.34) saturate(1.4);
+  transform: scale(1.12) translateZ(0);
+  pointer-events: none;
+}
+/* fond sobre derrière les vidéos (pas de double décodage) */
+.slide.is-video { background: radial-gradient(ellipse at center, #14110c 0%, #060606 75%); }
+
+.slide-media {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  background: transparent;
+}
+
+.slide.active.dir-next .slide-media { animation: enterNext .85s var(--ease-soft) both; }
+.slide.active.dir-prev .slide-media { animation: enterPrev .85s var(--ease-soft) both; }
+@keyframes enterNext {
+  from { opacity: 0; transform: translate3d(7%, 0, 0) scale(1.015); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0)   scale(1);     }
+}
+@keyframes enterPrev {
+  from { opacity: 0; transform: translate3d(-7%, 0, 0) scale(1.015); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0)    scale(1);     }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  #top    { padding: .5rem 1.4rem; }
+  #bottom { padding: 0 1.4rem .5rem; }
+}
+
+/* ════════════════════════════════════════════════
+   ATMOSPHERIC OVERLAYS (album)
+════════════════════════════════════════════════ */
+#grain {
+  position: fixed; inset: 0;
+  z-index: 10; pointer-events: none; opacity: .04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='250' height='250'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='250' height='250' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+#vignette {
+  position: fixed; inset: 0; z-index: 11; pointer-events: none;
+  background:
+    radial-gradient(ellipse at center, transparent 38%, rgba(0,0,0,.72) 100%),
+    linear-gradient(to bottom,
+      rgba(0,0,0,.35) 0%, transparent 22%,
+      transparent 72%, rgba(0,0,0,.6) 100%);
+}
+
+/* ════════════════════════════════════════════════
+   UI LAYER (album)
+════════════════════════════════════════════════ */
+#ui { position: fixed; inset: 0; z-index: 20; pointer-events: none; }
+
+#progress {
+  position: absolute; top: 0; left: 0;
+  height: 2px; width: 100%;
+  transform: scaleX(0); transform-origin: left;
+  background: linear-gradient(to right, rgba(232,207,160,.4), var(--gold-bright));
+  box-shadow: 0 0 14px rgba(212,180,131,.7);
+}
+
+#top {
+  position: absolute; top: 0; left: 0; right: 0;
+  padding: clamp(1rem,3.5vw,1.6rem) clamp(1rem,4vw,2.2rem);
+  display: flex; justify-content: flex-end; align-items: center;
+  pointer-events: auto;
+}
+
+#music-ctrl {
+  display: flex; align-items: center; gap: .6rem;
+  padding: .5rem .95rem;
+  background: rgba(10,9,7,.62);
+  border: 1px solid rgba(212,180,131,.3);
+  border-radius: 100px;
+  transition: background .4s var(--ease-soft), border-color .4s var(--ease-soft);
+  pointer-events: auto;
+}
+#music-ctrl:hover { background: rgba(212,180,131,.12); border-color: rgba(212,180,131,.55); }
+#music-btn { display: flex; align-items: center; background: none; border: none; cursor: pointer; padding: 0; }
+#track-name {
+  font-family: 'Lato', sans-serif;
+  font-size: .62rem; font-weight: 300; letter-spacing: .22em;
+  color: var(--gold-bright);
+  max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: opacity .4s var(--ease-soft);
+}
+#skip-btn {
+  background: none; border: none; cursor: pointer;
+  color: rgba(212,180,131,.6); font-size: .9rem; padding: 0; line-height: 1;
+  transition: color .25s, transform .25s; display: flex; align-items: center;
+}
+#skip-btn:hover { color: var(--gold-bright); transform: scale(1.18); }
+#skip-btn:active { transform: scale(.92); }
+
+.bars { display: flex; align-items: flex-end; gap: 1.8px; height: 13px; }
+.bar {
+  width: 2px; background: var(--gold-bright); border-radius: 1px;
+  box-shadow: 0 0 6px rgba(212,180,131,.5);
+  animation: eqAnim .8s ease infinite alternate;
+}
+.bar:nth-child(1) { animation-duration: .55s; }
+.bar:nth-child(2) { animation-duration: .8s;  animation-delay: .08s; }
+.bar:nth-child(3) { animation-duration: .65s; animation-delay: .18s; }
+.bar:nth-child(4) { animation-duration: .95s; animation-delay: .04s; }
+.bar:nth-child(5) { animation-duration: .7s;  animation-delay: .12s; }
+@keyframes eqAnim { from { height: 2px; opacity: .45; } to { height: 12px; opacity: 1; } }
+.bars.off .bar { animation-play-state: paused; height: 2px; opacity: .4; }
+
+#bottom {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 0 clamp(1rem,4vw,2.2rem) calc(env(safe-area-inset-bottom,0px) + 3.4rem);
+  display: flex; justify-content: space-between; align-items: flex-end;
+}
+#counter {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.05rem; font-weight: 500; font-style: italic;
+  letter-spacing: .05em; color: rgba(248,236,220,.65);
+  text-shadow: 0 2px 20px rgba(0,0,0,.9);
+}
+#counter b { color: var(--gold-bright); font-weight: 600; font-size: 1.35rem; }
+#caption {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(1rem, 2.8vw, 1.35rem); font-weight: 500; font-style: italic;
+  color: rgba(248,236,220,.95); text-shadow: 0 2px 25px rgba(0,0,0,.95);
+  text-align: right; max-width: 55%; line-height: 1.5;
+  opacity: 0; transform: translateY(12px);
+  transition: opacity .9s var(--ease-soft) .35s, transform .9s var(--ease-soft) .35s;
+}
+#caption.show { opacity: 1; transform: translateY(0); }
+
+/* indicateur vidéo (petit point + libellé) */
+#media-tag {
+  position: absolute; bottom: calc(env(safe-area-inset-bottom,0px) + 3.4rem);
+  left: 50%; transform: translateX(-50%);
+  display: none; align-items: center; gap: .4rem;
+  font-family: 'Lato', sans-serif; font-size: .55rem; font-weight: 300;
+  letter-spacing: .3em; text-transform: uppercase; color: rgba(248,236,220,.55);
+  pointer-events: none;
+}
+#media-tag.show { display: flex; }
+#media-tag .dot-rec { width: 6px; height: 6px; border-radius: 50%; background: #e8536a; box-shadow: 0 0 8px #e8536a; animation: recBlink 1.4s ease infinite; }
+@keyframes recBlink { 50% { opacity: .25; } }
+
+/* ─── Flèches ─── */
+.nav-btn {
+  position: fixed; top: 50%; transform: translateY(-50%);
+  z-index: 25; cursor: pointer;
+  width: 58px; height: 58px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: rgba(10,9,7,.32);
+  border: 1px solid rgba(212,180,131,0);
+  opacity: 0;
+  transition: opacity .5s var(--ease-soft), background .4s var(--ease-soft),
+              border-color .4s var(--ease-soft), transform .4s var(--ease-soft);
+  pointer-events: auto;
+}
+.nav-btn.show { opacity: 1; }
+#prev-btn { left: clamp(.5rem, 2vw, 1.5rem); }
+#next-btn { right: clamp(.5rem, 2vw, 1.5rem); }
+.nav-btn:hover { background: rgba(212,180,131,.14); border-color: rgba(212,180,131,.5); }
+#prev-btn:hover { transform: translateY(-50%) translateX(-3px); }
+#next-btn:hover { transform: translateY(-50%) translateX(3px); }
+.nav-btn svg {
+  width: 26px; height: 26px; stroke: rgba(248,236,220,.85);
+  fill: none; stroke-width: 1.3; filter: drop-shadow(0 2px 12px rgba(0,0,0,.9));
+  transition: stroke .3s;
+}
+.nav-btn:hover svg { stroke: var(--gold-bright); }
+/* TÉLÉPHONE : pas de bouton rond. TOUTE la moitié gauche = précédent,
+   TOUTE la moitié droite = suivant. Chevrons visibles comme repères. */
+@media (hover: none) {
+  .nav-btn { display: none; }
+  .tap-zone { top: 0; bottom: 0; width: 50%; }
+  #tap-l { left: 0;  background: linear-gradient(to right, rgba(0,0,0,.16), transparent 32%); }
+  #tap-r { right: 0; background: linear-gradient(to left,  rgba(0,0,0,.16), transparent 32%); }
+}
+
+/* ─── Zones tactiles gauche / droite ─── */
+.tap-zone { position: fixed; top: 14%; bottom: 24%; z-index: 15; pointer-events: auto;
+            display: flex; align-items: center; }
+#tap-l { left: 0; width: 38%; justify-content: flex-start; }
+#tap-r { right: 0; width: 38%; justify-content: flex-end; }
+.tap-arrow {
+  display: none;            /* caché sur desktop (boutons ronds au survol) */
+  width: 34px; height: 34px;
+  stroke: rgba(248,236,220,.85); fill: none; stroke-width: 1.4;
+  filter: drop-shadow(0 2px 12px rgba(0,0,0,.95));
+  margin: 0 clamp(.4rem, 4vw, 1.3rem);
+  pointer-events: none;
+}
+@keyframes arrowPulse { 0%, 100% { opacity: .5; } 50% { opacity: .95; } }
+
+#swipe-hint {
+  position: fixed; bottom: calc(env(safe-area-inset-bottom,0px) + 5.2rem);
+  left: 50%; transform: translateX(-50%); z-index: 25;
+  font-family: 'Lato', sans-serif; font-size: .55rem; font-weight: 100;
+  letter-spacing: .55em; text-transform: uppercase; color: rgba(255,255,255,.35);
+  white-space: nowrap; display: none;
+}
+#album-view.on #swipe-hint { display: none; }
+@media (hover: none) { #album-view.on #swipe-hint { display: block; animation: fadeUp .8s ease 1s both, hintFade 1s ease 5s forwards; } }
+@keyframes hintFade { to { opacity: 0; } }
+
+/* Inactivité — masque l'UI album */
+.idle #top, .idle #bottom, .idle .nav-btn, .idle #media-tag { opacity: 0 !important; transition: opacity 1s var(--ease-soft); }
+#top, #bottom { transition: opacity .8s var(--ease-soft); }
+/* le bouton retour et Clash restent visibles, mais s'estompent un peu en idle */
+.idle .back-btn { opacity: .25; }
+
+/* ════════════════════════════════════════════════
+   VERSION TÉLÉPHONE
+════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  #top { padding: calc(env(safe-area-inset-top,0px) + .85rem) calc(env(safe-area-inset-right,0px) + 1.05rem) .85rem; }
+  #bottom { padding: 0 calc(env(safe-area-inset-right,0px) + 1.05rem) calc(env(safe-area-inset-bottom,0px) + 3.6rem) calc(env(safe-area-inset-left,0px) + 1.05rem); align-items: center; }
+  #music-ctrl { padding: .42rem .7rem; gap: .45rem; }
+  #track-name { font-size: .56rem; letter-spacing: .14em; max-width: 80px; }
+  #skip-btn { font-size: .82rem; }
+  .bars { height: 11px; }
+  #counter { font-size: .9rem; } #counter b { font-size: 1.15rem; }
+  #caption { font-size: 1.02rem; max-width: 64%; line-height: 1.4; }
+  .home-cards { gap: .8rem; }
+  .card { flex: 1 1 100%; max-width: 360px; padding: 1.25rem 1.3rem; }
+  #vignette {
+    background:
+      radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,.6) 100%),
+      linear-gradient(to bottom, rgba(0,0,0,.45) 0%, transparent 20%, transparent 70%, rgba(0,0,0,.65) 100%);
+  }
+}
+@media (max-width: 380px) {
+  #track-name { max-width: 60px; font-size: .52rem; }
+  #coc-btn { font-size: .56rem; padding: .5rem .9rem; }
+  #coc-btn .coc-icon { height: 19px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .15s !important;
+  }
+  .float-photo { animation: none !important; will-change: auto; display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════ LOADER ══════════ -->
+<div id="loader">
+  <div class="l-title">Mines Nancy</div>
+  <div class="l-sub">chargement</div>
+  <div class="l-line"></div>
+</div>
+
+<!-- ══════════ MENU D'ACCUEIL ══════════ -->
+<div id="home" class="screen on">
+  <div class="home-bg" id="home-bg"></div>
+  <div class="home-scrim"></div>
+  <div class="home-content">
+    <div class="home-kicker">Guette les photos</div>
+    <h1 class="home-title">Mines Nancy</h1>
+    <div class="home-sub">en sah la vilagoise clash of clan — édition de ta grande tante</div>
+    <div class="home-insic">nique ta mère la pute l'insic</div>
+
+    <div class="home-cards">
+      <div class="card" id="card-album">
+        <div class="card-icon">🎞️</div>
+        <div class="card-title">L'Album</div>
+        <div class="card-desc">Photos &amp; vidéos · nos souvenirs</div>
+      </div>
+      <div class="card" id="card-clip">
+        <span class="card-badge">Bientôt</span>
+        <div class="card-icon">🌾</div>
+        <div class="card-title">Clip Farm</div>
+        <div class="card-desc">Le grand n'importe quoi</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ VUE ALBUM ══════════ -->
+<div id="album-view">
+  <div id="grain"></div>
+  <div id="vignette"></div>
+  <div id="slideshow"></div>
+
+  <div id="ui">
+    <div id="progress"></div>
+    <div id="top">
+      <div id="music-ctrl">
+        <button id="music-btn" aria-label="Lecture / Pause">
+          <div class="bars off"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+        </button>
+        <span id="track-name">Forever Young</span>
+        <button id="skip-btn" aria-label="Chanson suivante" title="Chanson suivante">⏭</button>
+      </div>
+    </div>
+    <div id="bottom">
+      <div class="bottom-left">
+        <button id="ov-btn" aria-label="Vue d'ensemble" title="Vue d'ensemble">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        </button>
+        <div id="counter"></div>
+      </div>
+      <div id="caption"></div>
+    </div>
+    <div id="media-tag"><span class="dot-rec"></span>Vidéo</div>
+  </div>
+
+  <button class="back-btn" id="back-album" aria-label="Retour au menu">
+    <svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg> Menu
+  </button>
+
+  <button id="upload-btn" aria-label="Ajouter une photo ou une vidéo">
+    <span class="upload-plus">+</span><span class="upload-label">Ajoute la tienne</span>
+  </button>
+  <input type="file" id="upload-input" accept="image/*,video/*" multiple hidden>
+
+  <button class="nav-btn" id="prev-btn" aria-label="Précédent"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg></button>
+  <button class="nav-btn" id="next-btn" aria-label="Suivant"><svg viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></button>
+
+  <div class="tap-zone" id="tap-l"><svg class="tap-arrow" viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg></div>
+  <div class="tap-zone" id="tap-r"><svg class="tap-arrow" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+  <div id="swipe-hint">touche à gauche ou à droite · ou glisse</div>
+</div>
+
+<!-- ══════════ VUE CLIP FARM ══════════ -->
+<div id="clip" class="screen">
+  <div class="clip-emoji">🌾🎬</div>
+  <div class="clip-title">Clip Farm</div>
+  <div class="clip-msg">La ferme à clips est en pleine récolte.<br>y aura de quoi dahek ici wallah mon gaté.</div>
+  <div class="clip-tag">on dit Kouatar ou Kaoutar svp ??</div>
+  <button class="back-btn" id="back-clip" aria-label="Retour au menu">
+    <svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg> Menu
+  </button>
+</div>
+
+<!-- ══════════ VUE D'ENSEMBLE (grille) ══════════ -->
+<div id="overview">
+  <div class="ov-head">
+    <span class="ov-title">Vue d'ensemble</span>
+    <button id="ov-close" aria-label="Fermer">✕</button>
+  </div>
+  <div class="ov-grid" id="ov-grid"></div>
+</div>
+
+<!-- ══════════ BOUTON CLASH OF CLANS (global) ══════════ -->
+<a id="coc-btn" href="https://link.clashofclans.com/fr?action=OpenClanProfile&tag=2RU2Q8008"
+   target="_blank" rel="noopener noreferrer">
+  <img class="coc-icon" src="coc-icon.png" alt=""> Rejoignez le clan
+</a>
+
+<!-- ══════════ AUDIO ══════════ -->
+<audio id="audio" loop preload="none"></audio>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   ✏️  CONFIGURATION
+════════════════════════════════════════════════════════════════ */
+const CONFIG = {
+  slideDuration: 7,   // durée d'une PHOTO (secondes)
+  videoCap: 15,       // plafond de lecture d'une VIDÉO (secondes)
+  autoPlay: true,
+  shuffle: true,      // ordre aléatoire à chaque ouverture du site
+};
+
+/* Stockage des ajouts de visiteurs — clés publiques, sans danger à exposer ici */
+const CLOUDINARY = {
+  cloudName: 'dpc1iwlin',
+  uploadPreset: 'album_unsigned',
+};
+const SUPABASE = {
+  url: 'https://fupekhowetudiaglbuiz.supabase.co',
+  anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1cGVraG93ZXR1ZGlhZ2xidWl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5NDkwODEsImV4cCI6MjA5NzUyNTA4MX0.XW7zY72WI6UnBuhE4_wUplSh-Ma3aq93u3eo2WTD77c',
+  table: 'uploads',
+};
+
+/* ── PHOTOS (générées depuis le dossier photos/) ── */
+const IMAGES = [
+  "photos/37D5635D-C4F4-46EF-B2A8-FD7CA5D08407.jpg",
+  "photos/4a243395-41e9-45cf-a778-6974c5c85b18.jpeg",
+  "photos/55314628857_7af3d0d355_o.jpg",
+  "photos/capture_ecran.png",
+  "photos/fqs 2025-10-17 231428.491.jpg",
+  "photos/IMG_4641.JPEG",
+  "photos/IMG_4704.jpeg",
+  "photos/IMG_4785.jpeg",
+  "photos/IMG_6051.JPG",
+  "photos/IMG_6221.JPEG",
+  "photos/IMG_6240.JPG",
+  "photos/IMG_6371.JPG",
+  "photos/IMG_6398.JPEG",
+  "photos/IMG_6640.JPG",
+  "photos/IMG_6641.JPG",
+  "photos/IMG_6710.JPG",
+  "photos/IMG_6721.JPEG",
+  "photos/IMG_6722.JPEG",
+  "photos/IMG_6948.JPG",
+  "photos/IMG_6952.JPG",
+  "photos/IMG_7066.JPG",
+  "photos/IMG_7071.JPG",
+  "photos/IMG_7075.JPG",
+  "photos/IMG_7099.jpeg",
+  "photos/IMG_7198.jpeg",
+  "photos/IMG_7199.jpeg",
+  "photos/IMG_7200.jpeg",
+  "photos/IMG_7201.jpeg",
+  "photos/IMG_7202.jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.56.jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.58 (1).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.58 (10).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.58 (2).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.58 (3).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.58 (4).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.58 (5).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.58 (6).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.58 (7).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.58 (8).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.58 (9).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.58.jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.59 (1).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.59 (10).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.59 (11).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.59 (12).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.59 (13).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.59 (14).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.59 (15).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.59 (16).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.59 (17).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.59 (18).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.59 (19).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.59 (2).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.59 (20).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.59 (3).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.59 (4).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.59 (5).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.59 (6).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.59 (7).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.59 (8).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.59 (9).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.59.jpeg",
+];
+
+/* ── VIDÉOS (intercalées dans l'album, muettes) ──
+   .mov : lisible sur iPhone ; sur Android, sauté proprement.
+   Pour un fallback universel, fournis une version .mp4 et ajoute  srcFallback. */
+const VIDEOS = [
+  { src: "photos/6E11B7F5-31D7-4DAB-AA30-E45088F74E12.mp4" },
+  { src: "photos/B034FEA8-3405-48C4-AF7C-8E757F1ABEE8.mp4" },
+  { src: "photos/E106AB83-78A5-452F-AE8F-06CF34FC208F.mov" },
+  { src: "photos/F4405552-F553-4A24-AE71-941CF06FCC5F.mp4" },
+  { src: "photos/IMG_4641.MOV" },
+  { src: "photos/IMG_6398.MOV" },
+  { src: "photos/IMG_6721.MOV" },
+];
+
+/* ── Photos qui flottent en arrière-plan du menu (petites, légères) ── */
+const FLOAT_PHOTOS = [
+  "photos/WhatsApp Image 2026-06-19 at 13.17.56.jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.58 (8).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.59.jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.59 (5).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.59 (6).jpeg",
+  "photos/WhatsApp Image 2026-06-19 at 13.17.59 (18).jpeg",
+  "photos/IMG_7202.jpeg",
+];
+
+/* Construit la liste finale : photos avec vidéos réparties régulièrement */
+function buildMediaList(images, videos) {
+  const media = images.map(src => ({ type: 'image', src, caption: '' }));
+  const v = videos.map(o => Object.assign({ type: 'video', caption: '' }, o));
+  if (v.length) {
+    const gap = Math.max(1, Math.floor(media.length / (v.length + 1)));
+    let pos = gap, vi = 0;
+    while (vi < v.length && pos < media.length) {
+      media.splice(pos, 0, v[vi]);
+      vi++; pos += gap + 1;
+    }
+    while (vi < v.length) media.push(v[vi++]);
+  }
+  return media;
+}
+const MEDIA = buildMediaList(IMAGES, VIDEOS);
+
+/* Mélange Fisher-Yates — ordre aléatoire à chaque visite */
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+  }
+  return arr;
+}
+
+const DEMO_GRADIENTS = [
+  'linear-gradient(135deg,#0f1923,#1a3a5c,#2d5a7a)','linear-gradient(135deg,#1a0f23,#5c1a5c,#9e4ec9)',
+  'linear-gradient(135deg,#23150f,#8B4513,#c9a96e)','linear-gradient(135deg,#0f231a,#1a5c3a,#4ec96e)',
+  'linear-gradient(135deg,#1a1a1a,#3a3a3a,#5a5a5a)','linear-gradient(135deg,#23100f,#8b2020,#c96e6e)',
+];
+
+let idx = 0;
+let autoTimer = null;
+let idleTimer = null;
+let touchX = 0, touchY = 0;
+let musicOn = false, musicStarted = false;
+let albumRunning = false;
+
+const $ = id => document.getElementById(id);
+const audio = $('audio');
+const bars  = document.querySelector('.bars');
+
+/* ─────────────────────── BUILD ─────────────────────── */
+function buildFloatPhotos() {
+  const c = $('home-bg');
+  FLOAT_PHOTOS.forEach((src, i) => {
+    const img = document.createElement('img');
+    img.className = 'float-photo fp' + (i + 1);
+    img.alt = ''; img.decoding = 'async'; img.loading = 'eager';
+    img.src = src;
+    img.onerror = () => img.remove();
+    c.appendChild(img);
+  });
+}
+
+function createSlideEl(item, i) {
+  const slide = document.createElement('div');
+  slide.className = 'slide' + (item.type === 'video' ? ' is-video' : '');
+  slide.id = `slide-${i}`;
+
+  if (item.type === 'video') {
+    // Indicateur "la vidéo charge" placé DERRIÈRE la vidéo : visible pendant le
+    // chargement, recouvert automatiquement dès que l'image vidéo s'affiche.
+    const load = document.createElement('div');
+    load.className = 'vid-loading';
+    load.textContent = 'la vidéo charge…';
+    slide.appendChild(load);
+
+    const v = document.createElement('video');
+    v.className = 'slide-media';
+    v.muted = true; v.defaultMuted = true; v.volume = 0;
+    v.setAttribute('muted', '');
+    v.setAttribute('playsinline', '');
+    v.setAttribute('webkit-playsinline', '');
+    v.setAttribute('disableremoteplayback', '');
+    v.setAttribute('x-webkit-airplay', 'deny');
+    v.preload = 'none';
+    v.dataset.idx = i;
+    v.addEventListener('error', () => onVideoError(v, item, i));
+    slide.appendChild(v);
+  } else {
+    const bgBlur = document.createElement('img');
+    bgBlur.className = 'slide-bg-blur';
+    bgBlur.alt = ''; bgBlur.decoding = 'async';
+    bgBlur.dataset.src = item.src;
+    slide.appendChild(bgBlur);
+
+    const img = document.createElement('img');
+    img.className = 'slide-media';
+    img.alt = ''; img.decoding = 'async';
+    img.dataset.src = item.src;
+    img.onerror = () => {
+      img.style.display = 'none'; bgBlur.style.display = 'none';
+      const bg = document.createElement('div');
+      bg.className = 'slide-media demo';
+      bg.style.background = DEMO_GRADIENTS[i % DEMO_GRADIENTS.length];
+      slide.appendChild(bg);
+    };
+    slide.appendChild(img);
+  }
+  return slide;
+}
+
+function buildSlides() {
+  const ss = $('slideshow');
+  MEDIA.forEach((item, i) => ss.appendChild(createSlideEl(item, i)));
+
+  // Affiche la 1re slide (sans démarrer les timers) + précharge quelques images
+  const first = $('slide-0');
+  if (first) first.classList.add('active', 'dir-next');
+  loadAround(0);
+  updateCounter(0);
+}
+
+/* Ajoute UNE slide à la volée (utilisé après un upload réussi) */
+function appendSlide(i, item) {
+  $('slideshow').appendChild(createSlideEl(item, i));
+  updateCounter(idx);
+}
+
+function loadSlideMedia(i) {
+  const slide = $(`slide-${i}`);
+  if (!slide) return;
+  slide.querySelectorAll('img[data-src]').forEach(img => {
+    img.src = img.dataset.src; img.removeAttribute('data-src');
+  });
+}
+function loadAround(i) {
+  const n = MEDIA.length;
+  [i, (i + 1) % n, (i - 1 + n) % n, (i + 2) % n].forEach(k => {
+    if (MEDIA[k] && MEDIA[k].type === 'image') loadSlideMedia(k);
+  });
+}
+
+/* ─────────────────────── VIDÉO ─────────────────────── */
+function chooseSrc(item) {
+  let u = item.src;
+  // Vidéos Cloudinary : on force une livraison .mp4 propre (lue sur iPhone ET Android),
+  // même si l'URL stockée est un .mov ou contient un transform fragile.
+  if (item.type === 'video' && isCloudinary(u)) {
+    return u.replace('/upload/f_auto,q_auto/', '/upload/').replace(/\.\w+($|\?)/i, '.mp4');
+  }
+  // .mov local avec version .mp4 de secours fournie
+  if (/\.mov$/i.test(u) && item.srcFallback) {
+    const probe = document.createElement('video');
+    if (!probe.canPlayType('video/quicktime')) return item.srcFallback;
+  }
+  return u;
+}
+
+function playActiveVideo(v, item, i) {
+  clearTimeout(autoTimer);
+  v.muted = true; v.defaultMuted = true; v.volume = 0;   // re-mute : anti vol audio iOS
+  if (!v.getAttribute('src')) { v.src = chooseSrc(item); v.load(); }
+  try { v.currentTime = 0; } catch (e) {}
+
+  const cap = (item.maxPlay || CONFIG.videoCap) * 1000;
+
+  // Avance idempotente : ne se déclenche qu'UNE fois par activation,
+  // et jamais après nettoyage (évite les sauts multiples sur revisite).
+  v._dead = false;
+  let advanced = false;
+  const advance = () => {
+    if (advanced || v._dead) return;
+    advanced = true;
+    cleanupVideo(v);
+    if (albumRunning) goTo(i + 1, 'next');
+  };
+  v._advance = advance;
+
+  // Retire d'éventuels handlers d'une visite précédente, puis (ré)attache
+  if (v._onEnded)   v.removeEventListener('ended', v._onEnded);
+  if (v._onPlaying) v.removeEventListener('playing', v._onPlaying);
+  v._onEnded = () => { clearTimeout(v._capT); advance(); };
+  v._playingFired = false;
+  v._onPlaying = () => {
+    // Le plafond et la barre sont armés au VRAI début de lecture
+    // (pas en temps mural) → une vidéo n'est jamais coupée trop tôt.
+    v._playingFired = true;
+    clearTimeout(v._loadGuard);
+    clearTimeout(v._capT);
+    v._capT = setTimeout(advance, cap);
+    const dur = isFinite(v.duration) && v.duration > 0 ? Math.min(v.duration, cap / 1000) : cap / 1000;
+    startProgress(dur);
+  };
+  v.addEventListener('ended', v._onEnded);
+  v.addEventListener('playing', v._onPlaying, { once: true });
+
+  // garde-fou : si la lecture ne démarre pas en ~6s (vidéo morte, format non lu,
+  // autoplay bloqué), on saute pour ne jamais figer le diaporama.
+  clearTimeout(v._loadGuard);
+  v._loadGuard = setTimeout(() => { if (!v._playingFired) onVideoError(v, item, i); }, 6000);
+
+  const p = v.play();
+  if (p && p.catch) p.catch(() => { v.muted = true; v.play().catch(() => onVideoError(v, item, i)); });
+}
+
+function cleanupVideo(v) {
+  if (!v) return;
+  try {
+    v._dead = true;
+    clearTimeout(v._capT); clearTimeout(v._loadGuard);
+    if (v._onEnded)   { v.removeEventListener('ended', v._onEnded); v._onEnded = null; }
+    if (v._onPlaying) { v.removeEventListener('playing', v._onPlaying); v._onPlaying = null; }
+    v.pause();
+    v.removeAttribute('src'); v.load();   // libère décodeur + buffer (clé iOS)
+    try { v.currentTime = 0; } catch (e) {}
+  } catch (e) {}
+}
+
+function onVideoError(v, item, i) {
+  if (item.srcFallback && !v._triedFallback) {
+    v._triedFallback = true;
+    v.src = item.srcFallback; v.load();
+    v.play().catch(() => {});
+    return;
+  }
+  if (v._advance) v._advance();                 // avance idempotente
+  else { cleanupVideo(v); if (albumRunning) goTo(i + 1, 'next'); }
+}
+
+/* ─────────────────────── MOTEUR DE SLIDES ─────────────────────── */
+let leaveTimer = null;
+
+function updateCounter(i) {
+  $('counter').innerHTML = `<b>${String(i + 1).padStart(2, '0')}</b> / ${String(MEDIA.length).padStart(2, '0')}`;
+}
+
+function activate(i, silent, dir = 'next') {
+  const slide = $(`slide-${i}`);
+  if (!slide) return;
+  const item = MEDIA[i];
+
+  // Nettoyage de la slide sortante
+  const current = document.querySelector('.slide.active');
+  document.querySelectorAll('.slide.leaving').forEach(s => { if (s !== current) s.classList.remove('leaving'); });
+  if (current && current !== slide) {
+    const ov = current.querySelector('video.slide-media');
+    if (ov) cleanupVideo(ov);
+    current.classList.remove('active', 'dir-next', 'dir-prev');
+    current.classList.add('leaving');
+    clearTimeout(leaveTimer);
+    leaveTimer = setTimeout(() => document.querySelectorAll('.slide.leaving').forEach(s => s.classList.remove('leaving')), 950);
+  }
+
+  if (item.type === 'image') loadSlideMedia(i);
+
+  slide.classList.remove('active', 'dir-next', 'dir-prev', 'leaving');
+  void slide.offsetWidth;
+  slide.classList.add('active', dir === 'prev' ? 'dir-prev' : 'dir-next');
+
+  updateCounter(i);
+
+  // Légende
+  const capEl = $('caption');
+  capEl.classList.remove('show');
+  const cap = item.caption || '';
+  if (cap) setTimeout(() => { capEl.textContent = cap; capEl.classList.add('show'); }, 550);
+  else capEl.textContent = '';
+
+  // Badge "Vidéo"
+  $('media-tag').classList.toggle('show', item.type === 'video');
+
+  if (!albumRunning) return;   // pas de timers tant qu'on n'est pas entré dans l'album
+
+  if (item.type === 'video') {
+    const v = slide.querySelector('video.slide-media');
+    playActiveVideo(v, item, i);
+  } else {
+    loadAround(i);
+    startProgress(CONFIG.slideDuration);
+    scheduleNext();
+  }
+}
+
+function goTo(i, dir) {
+  if (!albumRunning) return;
+  const n = MEDIA.length;
+  const newIdx = ((i % n) + n) % n;
+  if (!dir) {
+    if      (newIdx === (idx + 1) % n)     dir = 'next';
+    else if (newIdx === (idx - 1 + n) % n) dir = 'prev';
+    else                                   dir = 'next';
+  }
+  idx = newIdx;
+  activate(idx, false, dir);
+}
+
+function scheduleNext() {
+  clearTimeout(autoTimer);
+  if (!albumRunning || !CONFIG.autoPlay) return;
+  if (MEDIA[idx].type === 'video') return;   // la vidéo gère sa propre avance
+  autoTimer = setTimeout(() => goTo(idx + 1, 'next'), CONFIG.slideDuration * 1000);
+}
+
+/* ─────────────────────── BARRE DE PROGRESSION ─────────────────────── */
+function startProgress(durationSec) {
+  const bar = $('progress');
+  bar.style.transition = 'none';
+  bar.style.transform = 'scaleX(0)';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    bar.style.transition = `transform ${durationSec}s linear`;
+    bar.style.transform = 'scaleX(1)';
+  }));
+}
+
+/* ─────────────────────── MUSIQUE ─────────────────────── */
+const PLAYLIST = [
+  { src: 'audio/Samsung SMX C200 Memory Cam teste.mp3',                   label: 'Forever Young'    },
+  { src: 'audio/Philibert.mp3',                                           label: 'Philibert'        },
+  { src: 'audio/Low Roar - Give Up.mp3',                                  label: 'Give Up'          },
+  { src: 'audio/Red_Hot_Chilli_Peppers_-_Under_the_bridge_(mp3.pm).mp3', label: 'Under the Bridge' },
+  { src: 'audio/the_weeknd_-_wicked_games_slowed_reverb_(mp3.pm).mp3',    label: 'Wicked Games'     },
+];
+let trackIdx = 0;
+
+function loadTrack(i, play) {
+  trackIdx = ((i % PLAYLIST.length) + PLAYLIST.length) % PLAYLIST.length;
+  const track = PLAYLIST[trackIdx];
+  audio.src = track.src; audio.load();
+  const nameEl = $('track-name');
+  nameEl.style.opacity = '0';
+  setTimeout(() => { nameEl.textContent = track.label; nameEl.style.opacity = '1'; }, 250);
+  if (play && musicOn) audio.play().catch(() => {});
+}
+function skipTrack() { loadTrack(trackIdx + 1, true); }
+function startMusicOnce() {
+  if (musicStarted || musicOn) return;
+  // On ne verrouille QU'en cas de succès réel : si ce 1er play() échoue
+  // (Low Power iOS, fichier pas prêt…), le prochain geste réessaiera.
+  audio.play()
+    .then(() => { musicStarted = true; musicOn = true; bars.classList.remove('off'); })
+    .catch(() => {});
+}
+function toggleMusic() {
+  if (musicOn) { audio.pause(); musicOn = false; bars.classList.add('off'); }
+  else { audio.play().then(() => { musicOn = true; bars.classList.remove('off'); }).catch(() => {}); }
+}
+
+/* ─────────────────────── UPLOAD VISITEURS ─────────────────────── */
+
+/* Lit, au chargement, tout ce que d'autres ont déjà ajouté */
+async function fetchUserUploads() {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 4000);
+    const res = await fetch(
+      `${SUPABASE.url}/rest/v1/${SUPABASE.table}?select=type,url,caption&order=created_at.asc`,
+      { headers: { apikey: SUPABASE.anonKey, Authorization: `Bearer ${SUPABASE.anonKey}` }, signal: ctrl.signal }
+    );
+    clearTimeout(t);
+    if (!res.ok) return [];
+    const rows = await res.json();
+    return rows.map(r => ({ type: r.type, src: r.url, caption: r.caption || '' }));
+  } catch (e) {
+    return []; // hors ligne / Supabase indisponible → on affiche quand même les 69 d'origine
+  }
+}
+
+function setUploadState(state, label) {
+  const btn = $('upload-btn');
+  btn.classList.remove('busy', 'ok', 'err');
+  if (state) btn.classList.add(state);
+  btn.querySelector('.upload-label').textContent = label;
+}
+function resetUploadSoon() {
+  setTimeout(() => setUploadState(null, 'Ajoute la tienne'), 2200);
+}
+
+/* Enregistre l'adresse Cloudinary dans la table Supabase */
+async function saveUploadRecord(type, url) {
+  const res = await fetch(`${SUPABASE.url}/rest/v1/${SUPABASE.table}`, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE.anonKey,
+      Authorization: `Bearer ${SUPABASE.anonKey}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal',
+    },
+    body: JSON.stringify({ type, url, caption: '' }),
+  });
+  if (!res.ok) throw new Error('supabase insert failed');
+}
+
+/* Envoie le fichier choisi vers Cloudinary, puis note son adresse dans Supabase */
+/* Envoie UN fichier (Cloudinary + Supabase + affichage). Renvoie {ok, reason}. */
+function uploadOne(file, onProgress) {
+  return new Promise(resolve => {
+    if (file.size > 100 * 1024 * 1024) { resolve({ ok: false, reason: 'size' }); return; }
+
+    const form = new FormData();
+    form.append('file', file);
+    form.append('upload_preset', CLOUDINARY.uploadPreset);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUDINARY.cloudName}/auto/upload`);
+    xhr.upload.addEventListener('progress', e => {
+      if (e.lengthComputable && onProgress) onProgress(e.loaded / e.total);
+    });
+
+    xhr.onload = async () => {
+      let data = null;
+      try { data = JSON.parse(xhr.responseText); } catch (e) {}
+      if (xhr.status < 200 || xhr.status >= 300 || !data || !data.secure_url) {
+        console.error('Upload Cloudinary échoué :', xhr.status, xhr.responseText);
+        const m = data && data.error && data.error.message ? data.error.message : '';
+        resolve({ ok: false, reason: /size|large|lourd/i.test(m) ? 'size' : 'fail' });
+        return;
+      }
+      const type = data.resource_type === 'video' ? 'video' : 'image';
+      let url = data.secure_url;
+      if (type === 'video') url = url.replace(/\.\w+($|\?)/i, '.mp4'); // mp4 universel
+      else url = url.replace('/upload/', '/upload/f_auto,q_auto/');     // image optimisée
+      try {
+        await saveUploadRecord(type, url);
+        MEDIA.push({ type, src: url, caption: '' });
+        appendSlide(MEDIA.length - 1, MEDIA[MEDIA.length - 1]);
+        resolve({ ok: true });
+      } catch (e) {
+        console.error('Enregistrement Supabase échoué :', e);
+        resolve({ ok: false, reason: 'fail' });
+      }
+    };
+    xhr.onerror = () => { console.error('Réseau : upload interrompu'); resolve({ ok: false, reason: 'fail' }); };
+    xhr.send(form);
+  });
+}
+
+/* Envoie PLUSIEURS fichiers à la suite, avec progression globale. */
+async function handleFiles(fileList) {
+  const files = Array.from(fileList || []);
+  if (!files.length || $('upload-btn').classList.contains('busy')) return;
+
+  const total = files.length;
+  let ok = 0, fail = 0;
+  for (let i = 0; i < total; i++) {
+    const head = total > 1 ? `Envoi ${i + 1}/${total}` : 'Envoi…';
+    setUploadState('busy', head);
+    const res = await uploadOne(files[i], frac => {
+      const pct = Math.round(frac * 100);
+      setUploadState('busy', total > 1 ? `${head} · ${pct}%` : `Envoi… ${pct}%`);
+    });
+    res.ok ? ok++ : fail++;
+  }
+
+  if (fail === 0)    setUploadState('ok', total > 1 ? `${ok} ajoutés ✓` : 'Ajouté ✓');
+  else if (ok === 0) setUploadState('err', 'Échec ✗');
+  else               setUploadState('err', `${ok} ok · ${fail} échec`);
+  resetUploadSoon();
+}
+
+/* ─────────────────────── VUE D'ENSEMBLE ─────────────────────── */
+let overviewOpen = false;
+
+function isCloudinary(u) { return /res\.cloudinary\.com/.test(u); }
+
+/* Miniature légère pour la grille (les fichiers Cloudinary sont redimensionnés) */
+function thumbUrl(item) {
+  const u = item.src;
+  if (isCloudinary(u)) {
+    return u.includes('/upload/f_auto')
+      ? u.replace('/upload/f_auto,q_auto/', '/upload/f_auto,q_auto,w_320,c_limit/')
+      : u.replace('/upload/', '/upload/w_320,c_limit,q_auto,f_auto/');
+  }
+  return u; // fichier local : pas de redimensionnement possible
+}
+
+function buildOverview() {
+  const grid = $('ov-grid');
+  grid.innerHTML = '';
+  MEDIA.forEach((item, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'ov-cell' + (i === idx ? ' current' : '');
+
+    if (item.type === 'video') {
+      cell.innerHTML = '<div class="ov-vid">▶</div>';
+    } else {
+      const img = document.createElement('img');
+      img.loading = 'lazy'; img.decoding = 'async'; img.alt = '';
+      img.src = thumbUrl(item);
+      img.onerror = () => { cell.innerHTML = '<div class="ov-vid">🖼️</div>'; appendNum(); };
+      cell.appendChild(img);
+    }
+    function appendNum() {
+      const num = document.createElement('div');
+      num.className = 'ov-num'; num.textContent = i + 1;
+      cell.appendChild(num);
+    }
+    appendNum();
+
+    cell.addEventListener('click', () => { closeOverview(false); goTo(i); });
+    grid.appendChild(cell);
+  });
+}
+
+/* Force des cellules parfaitement carrées sur tout appareil (garantie + responsive) */
+function squareCells() {
+  document.querySelectorAll('#ov-grid .ov-cell').forEach(c => { c.style.height = c.offsetWidth + 'px'; });
+}
+
+function openOverview() {
+  if (!albumRunning) return;
+  overviewOpen = true;
+  clearTimeout(autoTimer);
+  const av = document.querySelector('.slide.active video.slide-media');
+  if (av) { clearTimeout(av._capT); clearTimeout(av._loadGuard); av.pause(); }
+  buildOverview();
+  $('overview').classList.add('on');
+  requestAnimationFrame(squareCells);
+}
+
+function closeOverview(resume) {
+  overviewOpen = false;
+  $('overview').classList.remove('on');
+  if (resume && albumRunning) activate(idx, false, 'next'); // reprend la slide courante
+}
+
+/* ─────────────────────── ROUTAGE ─────────────────────── */
+function showScreen(name) {
+  $('home').classList.toggle('on', name === 'home');
+  $('clip').classList.toggle('on', name === 'clip');
+  $('album-view').classList.toggle('on', name === 'album');
+}
+
+function enterAlbum() {
+  startMusicOnce();
+  showScreen('album');
+  albumRunning = true;
+  resetIdle(); showNav();
+  activate(idx, false, 'next');
+}
+function enterClip() {
+  startMusicOnce();
+  pauseAlbum();
+  showScreen('clip');
+}
+function goHome() {
+  pauseAlbum();
+  showScreen('home');
+}
+function pauseAlbum() {
+  albumRunning = false;
+  clearTimeout(autoTimer);
+  const av = document.querySelector('.slide.active video.slide-media');
+  if (av) cleanupVideo(av);
+}
+
+/* ─────────────────────── INACTIVITÉ ─────────────────────── */
+function resetIdle() {
+  document.body.classList.remove('idle');
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => { if (albumRunning) document.body.classList.add('idle'); }, 3500);
+}
+function showNav() { document.querySelectorAll('.nav-btn').forEach(b => b.classList.add('show')); }
+
+/* ─────────────────────── ÉVÉNEMENTS ─────────────────────── */
+function bindEvents() {
+  $('card-album').addEventListener('click', enterAlbum);
+  $('card-clip').addEventListener('click', enterClip);
+  $('back-album').addEventListener('click', goHome);
+  $('back-clip').addEventListener('click', goHome);
+  $('coc-btn').addEventListener('click', () => startMusicOnce());
+
+  $('prev-btn').addEventListener('click', () => { goTo(idx - 1, 'prev'); resetIdle(); });
+  $('next-btn').addEventListener('click', () => { goTo(idx + 1, 'next'); resetIdle(); });
+  $('music-btn').addEventListener('click', e => { e.stopPropagation(); startMusicOnce(); toggleMusic(); });
+  $('skip-btn').addEventListener('click', e => { e.stopPropagation(); startMusicOnce(); skipTrack(); });
+  $('tap-l').addEventListener('click', () => { goTo(idx - 1, 'prev'); resetIdle(); });
+  $('tap-r').addEventListener('click', () => { goTo(idx + 1, 'next'); resetIdle(); });
+
+  // Upload
+  $('upload-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    if ($('upload-btn').classList.contains('busy')) return;
+    $('upload-input').value = '';
+    $('upload-input').click();
+  });
+  $('upload-input').addEventListener('change', () => {
+    handleFiles($('upload-input').files);
+  });
+
+  // Vue d'ensemble
+  $('ov-btn').addEventListener('click', e => { e.stopPropagation(); openOverview(); });
+  $('ov-close').addEventListener('click', () => closeOverview(true));
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && overviewOpen) { closeOverview(true); return; }
+    if (!albumRunning || overviewOpen) return;
+    resetIdle(); showNav();
+    if (e.key === 'ArrowLeft')                   goTo(idx - 1, 'prev');
+    if (e.key === 'ArrowRight' || e.key === ' ') goTo(idx + 1, 'next');
+    if (e.key === 'm' || e.key === 'M')          toggleMusic();
+    if (e.key === 'Escape')                      goHome();
+  });
+
+  const sv = $('album-view');
+  sv.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; touchY = e.touches[0].clientY; }, { passive: true });
+  sv.addEventListener('touchend', e => {
+    if (!albumRunning) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    const dy = e.changedTouches[0].clientY - touchY;
+    if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy)) {
+      dx > 0 ? goTo(idx - 1, 'prev') : goTo(idx + 1, 'next');
+      resetIdle();
+    }
+  }, { passive: true });
+
+  sv.addEventListener('mousemove', () => { if (albumRunning) { resetIdle(); showNav(); } });
+
+  window.addEventListener('resize', () => { if (overviewOpen) squareCells(); });
+}
+
+/* ─────────────────────── INIT ─────────────────────── */
+window.addEventListener('DOMContentLoaded', async () => {
+  loadTrack(0, false);
+  buildFloatPhotos();
+  const userUploads = await fetchUserUploads();   // tes 69 + tout ce qui a été ajouté depuis
+  MEDIA.push(...userUploads);
+  if (CONFIG.shuffle) shuffle(MEDIA);             // ordre aléatoire à chaque visite
+  buildSlides();
+  bindEvents();
+});
+</script>
+</body>
+</html>

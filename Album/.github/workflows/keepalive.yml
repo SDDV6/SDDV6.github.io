@@ -1,0 +1,40 @@
+name: keepalive-supabase
+
+# But : empêcher la mise en veille du projet Supabase (gratuit → pause après ~7 jours
+# d'inactivité). Cette action interroge la base tous les 2 jours, ce qui la garde active.
+# Elle commit aussi un petit horodatage pour que GitHub ne désactive PAS ce workflow
+# (GitHub coupe les workflows planifiés après 60 jours sans activité du dépôt).
+
+on:
+  schedule:
+    - cron: '17 6 */2 * *'   # ~tous les 2 jours à 06:17 UTC
+  workflow_dispatch:          # bouton "Run workflow" dans l'onglet Actions (test manuel)
+
+permissions:
+  contents: write
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupère le dépôt
+        uses: actions/checkout@v4
+
+      - name: Réveille la base Supabase
+        run: |
+          # clé "anon public" — sans danger d'être publique
+          curl -fsS \
+            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1cGVraG93ZXR1ZGlhZ2xidWl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5NDkwODEsImV4cCI6MjA5NzUyNTA4MX0.XW7zY72WI6UnBuhE4_wUplSh-Ma3aq93u3eo2WTD77c" \
+            "https://fupekhowetudiaglbuiz.supabase.co/rest/v1/uploads?select=id&limit=1"
+          echo ""
+          echo "Ping Supabase OK"
+
+      - name: Garde ce workflow actif (horodatage)
+        run: |
+          mkdir -p .github
+          date -u > .github/last-keepalive.txt
+          git config user.name  "keepalive-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add .github/last-keepalive.txt
+          git commit -m "keepalive $(date -u +%Y-%m-%d)" || echo "rien a committer"
+          git push || echo "push ignore"

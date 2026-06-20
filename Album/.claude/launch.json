@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "album",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-p", "3000", "C:\\Users\\baptm\\OneDrive\\Desktop\\Album"],
+      "port": 3000
+    }
+  ]
+}
