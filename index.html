@@ -442,6 +442,12 @@ html, body {
 }
 .slide.active { opacity: 1; z-index: 2; }
 
+/* Slides hors de la fenêtre de rendu : sorties du rendu pour borner la mémoire.
+   Sans ça, des centaines de slides plein écran se composent d'un coup au clic
+   « album » → l'onglet Safari iOS dépasse sa limite mémoire et plante
+   (« A problem repeatedly occurred »). */
+.slide.dormant { display: none; }
+
 /* Fond flouté peint uniquement pour la photo visible */
 .slide:not(.active):not(.leaving) .slide-bg-blur { display: none; }
 .slide-bg-blur {
@@ -975,7 +981,9 @@ function buildFloatPhotos() {
 
 function createSlideEl(item, i) {
   const slide = document.createElement('div');
-  slide.className = 'slide' + (item.type === 'video' ? ' is-video' : '');
+  // 'dormant' par défaut : la slide ne sera rendue que lorsqu'elle entrera dans la
+  // fenêtre de rendu (setRenderWindow). Évite de composer toutes les slides d'un coup.
+  slide.className = 'slide dormant' + (item.type === 'video' ? ' is-video' : '');
   slide.id = `slide-${i}`;
 
   if (item.type === 'video') {
@@ -1028,6 +1036,7 @@ function buildSlides() {
   // Affiche la 1re slide (sans démarrer les timers) + précharge quelques images
   const first = $('slide-0');
   if (first) first.classList.add('active', 'dir-next');
+  setRenderWindow(0);   // ne garde rendues que ~5 slides (anti-crash mémoire iOS)
   loadAround(0);
   updateCounter(0);
 }
@@ -1045,10 +1054,43 @@ function loadSlideMedia(i) {
     img.src = img.dataset.src; img.removeAttribute('data-src');
   });
 }
+const RENDER_WIN = 2;   // nb de slides gardées rendues de chaque côté de la courante
+
 function loadAround(i) {
   const n = MEDIA.length;
-  [i, (i + 1) % n, (i - 1 + n) % n, (i + 2) % n].forEach(k => {
+  for (let d = -RENDER_WIN; d <= RENDER_WIN; d++) {
+    const k = ((i + d) % n + n) % n;
     if (MEDIA[k] && MEDIA[k].type === 'image') loadSlideMedia(k);
+  }
+}
+
+/* Décharge les images d'une slide → libère la mémoire décodée.
+   Rechargées automatiquement via data-src quand la slide revient dans la fenêtre. */
+function unloadSlideMedia(slide) {
+  slide.querySelectorAll('img.slide-media, img.slide-bg-blur').forEach(img => {
+    const cur = img.getAttribute('src');
+    if (cur) { img.dataset.src = cur; img.removeAttribute('src'); }
+  });
+}
+
+/* Ne garde RENDUES (display:block) que les ~5 slides autour de `center`.
+   Toutes les autres passent en display:none et libèrent leur image/vidéo.
+   C'est LA correction du crash iOS : composer des centaines de slides plein écran
+   d'un seul coup fait dépasser la limite mémoire de l'onglet Safari. */
+function setRenderWindow(center) {
+  const n = MEDIA.length;
+  const live = new Set();
+  for (let d = -RENDER_WIN; d <= RENDER_WIN; d++) live.add(((center + d) % n + n) % n);
+  document.querySelectorAll('#slideshow .slide').forEach(s => {
+    const k = +s.id.split('-')[1];
+    if (live.has(k)) {
+      s.classList.remove('dormant');
+    } else if (!s.classList.contains('dormant')) {
+      const v = s.querySelector('video.slide-media');
+      if (v) cleanupVideo(v);
+      unloadSlideMedia(s);
+      s.classList.add('dormant');
+    }
   });
 }
 
@@ -1150,6 +1192,8 @@ function activate(i, silent, dir = 'next') {
   const slide = $(`slide-${i}`);
   if (!slide) return;
   const item = MEDIA[i];
+
+  setRenderWindow(i);   // borne le rendu à ~5 slides autour de la courante (anti-crash iOS)
 
   // Nettoyage de la slide sortante
   const current = document.querySelector('.slide.active');
