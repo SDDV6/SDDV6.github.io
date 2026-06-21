@@ -246,32 +246,92 @@ html, body {
    VUE CLIP FARM (à venir)
 ════════════════════════════════════════════════ */
 #clip {
-  background: radial-gradient(ellipse at 50% 40%, #16110a 0%, #070707 72%);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  text-align: center; padding: 1.5rem;
+  background: radial-gradient(ellipse at 50% 25%, #16110a 0%, #070707 72%);
+  display: flex; flex-direction: column;
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: calc(env(safe-area-inset-top,0px) + 4.6rem) 1rem calc(env(safe-area-inset-bottom,0px) + 2.2rem);
 }
-.clip-emoji { font-size: clamp(2.6rem, 9vw, 4rem); animation: fadeUp 1s var(--ease-soft) .1s both; }
+.clip-wrap { width: 100%; max-width: 1100px; margin: 0 auto; }
+.clip-head { text-align: center; margin-bottom: 1.5rem; }
 .clip-title {
   font-family: 'Playfair Display', serif;
-  font-size: clamp(2.6rem, 12vw, 5.5rem);
+  font-size: clamp(2.1rem, 9vw, 3.8rem);
   font-weight: 700; font-style: italic; color: var(--cream);
-  margin: .2em 0 .25em; line-height: 1;
+  margin: 0 0 .18em; line-height: 1;
   text-shadow: 0 0 50px rgba(212,180,131,.3);
-  animation: heroReveal 1.3s var(--ease-soft) .25s both;
-}
-.clip-msg {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(1.1rem, 3.4vw, 1.5rem); font-style: italic;
-  color: rgba(248,236,220,.8); max-width: 480px; line-height: 1.5;
-  animation: fadeUp 1.1s var(--ease-soft) .5s both;
 }
 .clip-tag {
-  margin-top: 1.4rem;
   font-family: 'Lato', sans-serif;
-  font-size: .62rem; font-weight: 300; letter-spacing: .42em; text-transform: uppercase;
-  color: var(--gold-bright);
-  animation: fadeUp 1.1s var(--ease-soft) .7s both;
+  font-size: .58rem; font-weight: 300; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--gold-bright); margin-bottom: 1.1rem; line-height: 1.6;
 }
+/* Bouton d'upload Clip Farm (même esprit que l'album) */
+#clip-upload-btn {
+  display: inline-flex; align-items: center; gap: .45rem;
+  padding: .6rem 1.35rem;
+  background: rgba(10,9,7,.6);
+  border: 1px solid rgba(212,180,131,.45);
+  border-radius: 100px; color: var(--gold-bright);
+  font-family: 'Lato', sans-serif;
+  font-size: .62rem; font-weight: 400; letter-spacing: .16em; text-transform: uppercase;
+  cursor: pointer;
+  transition: background .3s var(--ease-soft), border-color .3s var(--ease-soft);
+}
+#clip-upload-btn:hover { background: rgba(212,180,131,.14); border-color: var(--gold-bright); }
+#clip-upload-btn .upload-plus { font-size: .9rem; line-height: 1; }
+#clip-upload-btn.busy { opacity: .8; cursor: default; }
+#clip-upload-btn.ok   { border-color: #8fd19e; color: #b9eec4; }
+#clip-upload-btn.err  { border-color: #e08a8a; color: #f2b8b8; }
+
+#clip-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 8px;
+}
+.clip-cell {
+  position: relative; aspect-ratio: 1 / 1; overflow: hidden;
+  border-radius: 10px; cursor: pointer; background: #14110c;
+  border: 1px solid rgba(212,180,131,.14);
+  transition: transform .25s var(--ease-soft), border-color .25s;
+}
+.clip-cell:hover { transform: scale(1.03); border-color: rgba(212,180,131,.5); }
+.clip-cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.clip-cell.noimg::after { content: '🎬'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; opacity: .5; }
+.clip-play {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; color: rgba(255,255,255,.95);
+  text-shadow: 0 2px 12px rgba(0,0,0,.85); pointer-events: none;
+  background: radial-gradient(circle at center, rgba(0,0,0,.3), transparent 62%);
+}
+.clip-empty {
+  text-align: center; padding: 3rem 1rem;
+  font-family: 'Cormorant Garamond', serif; font-style: italic;
+  font-size: clamp(1.1rem, 3.5vw, 1.4rem); color: rgba(248,236,220,.6);
+}
+
+/* Lightbox Clip Farm */
+#clip-light {
+  position: fixed; inset: 0; z-index: 90;
+  background: rgba(4,4,4,.94);
+  display: none; align-items: center; justify-content: center;
+  padding: calc(env(safe-area-inset-top,0px) + 1rem) 1rem calc(env(safe-area-inset-bottom,0px) + 1rem);
+}
+#clip-light.on { display: flex; animation: clipFade .25s ease both; }
+@keyframes clipFade { from { opacity: 0; } to { opacity: 1; } }
+#clip-light-body { max-width: 100%; max-height: 100%; display: flex; align-items: center; justify-content: center; }
+#clip-light-body img, #clip-light-body video {
+  max-width: 100%; max-height: 88vh; max-height: 88dvh;
+  border-radius: 8px; box-shadow: 0 20px 70px rgba(0,0,0,.7);
+}
+#clip-light-close {
+  position: fixed; z-index: 91;
+  top: calc(env(safe-area-inset-top,0px) + 1rem); right: calc(env(safe-area-inset-right,0px) + 1.1rem);
+  width: 42px; height: 42px; border-radius: 50%;
+  background: rgba(10,9,7,.7); border: 1px solid rgba(212,180,131,.35);
+  color: var(--gold-bright); font-size: 1.05rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+#clip-light-close:hover { background: rgba(212,180,131,.18); }
 
 /* ════════════════════════════════════════════════
    BOUTON RETOUR MENU
@@ -758,10 +818,9 @@ html, body {
         <div class="card-desc">Photos &amp; vidéos · nos souvenirs</div>
       </div>
       <div class="card" id="card-clip">
-        <span class="card-badge">Bientôt</span>
         <div class="card-icon">🌾</div>
         <div class="card-title">Clip Farm</div>
-        <div class="card-desc">Le grand n'importe quoi</div>
+        <div class="card-desc">Le grand n'importe quoi · balance tes clips</div>
       </div>
     </div>
   </div>
@@ -818,13 +877,27 @@ html, body {
 
 <!-- ══════════ VUE CLIP FARM ══════════ -->
 <div id="clip" class="screen">
-  <div class="clip-emoji">🌾🎬</div>
-  <div class="clip-title">Clip Farm</div>
-  <div class="clip-msg">La ferme à clips est en pleine récolte.<br>y aura de quoi dahek ici wallah mon gaté.</div>
-  <div class="clip-tag">on dit Kouatar ou Kaoutar svp ??</div>
   <button class="back-btn" id="back-clip" aria-label="Retour au menu">
     <svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg> Menu
   </button>
+  <div class="clip-wrap">
+    <div class="clip-head">
+      <div class="clip-title">Clip Farm</div>
+      <div class="clip-tag">le grand n'importe quoi · balance ton clip, tout le monde le voit</div>
+      <button id="clip-upload-btn" aria-label="Ajouter une photo ou une vidéo">
+        <span class="upload-plus">+</span><span class="upload-label">Ajoute ton clip</span>
+      </button>
+      <input type="file" id="clip-upload-input" accept="image/*,video/*" multiple hidden>
+    </div>
+    <div id="clip-grid"></div>
+    <div id="clip-empty" class="clip-empty">Encore vide… sois le premier à balancer un clip 🎬</div>
+  </div>
+</div>
+
+<!-- ══════════ LIGHTBOX CLIP FARM ══════════ -->
+<div id="clip-light">
+  <button id="clip-light-close" aria-label="Fermer">✕</button>
+  <div id="clip-light-body"></div>
 </div>
 
 <!-- ══════════ VUE D'ENSEMBLE (grille) ══════════ -->
@@ -843,7 +916,7 @@ html, body {
 </a>
 
 <!-- ══════════ AUDIO ══════════ -->
-<audio id="audio" loop preload="none"></audio>
+<audio id="audio" preload="none"></audio>
 
 <script>
 /* ════════════════════════════════════════════════════════════════
@@ -974,6 +1047,22 @@ function buildMediaList(images, videos) {
   return media;
 }
 const MEDIA = buildMediaList(IMAGES, VIDEOS);
+
+/* Clip Farm : collection séparée (uploads visiteurs uniquement), table Supabase à part. */
+const CLIP_MEDIA = [];
+
+/* Descripteur de zone d'upload : quelle table Supabase, quel bouton, comment
+   afficher le nouvel ajout. Permet à un seul pipeline de servir Album ET Clip Farm. */
+const ZONE = {
+  album: {
+    table: SUPABASE.table, btn: 'upload-btn', label: 'Ajoute la tienne',
+    add(item) { MEDIA.push(item); appendSlide(MEDIA.length - 1, item); },
+  },
+  clip: {
+    table: 'clip_uploads', btn: 'clip-upload-btn', label: 'Ajoute ton clip',
+    add(item) { CLIP_MEDIA.push(item); clipAddCell(CLIP_MEDIA.length - 1, item); },
+  },
+};
 
 /* Mélange Fisher-Yates — ordre aléatoire à chaque visite */
 function shuffle(arr) {
@@ -1339,13 +1428,14 @@ function toggleMusic() {
 
 /* ─────────────────────── UPLOAD VISITEURS ─────────────────────── */
 
-/* Lit, au chargement, tout ce que d'autres ont déjà ajouté */
-async function fetchUserUploads() {
+/* Lit ce que d'autres ont déjà ajouté (zone 'album' ou 'clip') */
+async function fetchUploads(zone) {
+  const table = (ZONE[zone] || ZONE.album).table;
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 4000);
     const res = await fetch(
-      `${SUPABASE.url}/rest/v1/${SUPABASE.table}?select=type,url,caption&order=created_at.asc`,
+      `${SUPABASE.url}/rest/v1/${table}?select=type,url,caption&order=created_at.asc`,
       { headers: { apikey: SUPABASE.anonKey, Authorization: `Bearer ${SUPABASE.anonKey}` }, signal: ctrl.signal }
     );
     clearTimeout(t);
@@ -1353,23 +1443,25 @@ async function fetchUserUploads() {
     const rows = await res.json();
     return rows.map(r => ({ type: r.type, src: r.url, caption: r.caption || '' }));
   } catch (e) {
-    return []; // hors ligne / Supabase indisponible → on affiche quand même les 69 d'origine
+    return []; // hors ligne / table absente → dégradation propre (album garde ses 69 ; clip reste vide)
   }
 }
 
-function setUploadState(state, label) {
-  const btn = $('upload-btn');
+function setUploadState(state, label, btnId = 'upload-btn') {
+  const btn = $(btnId);
+  if (!btn) return;
   btn.classList.remove('busy', 'ok', 'err');
   if (state) btn.classList.add(state);
-  btn.querySelector('.upload-label').textContent = label;
+  const lbl = btn.querySelector('.upload-label');
+  if (lbl) lbl.textContent = label;
 }
-function resetUploadSoon() {
-  setTimeout(() => setUploadState(null, 'Ajoute la tienne'), 2200);
+function resetUploadSoon(btnId = 'upload-btn', label = 'Ajoute la tienne') {
+  setTimeout(() => setUploadState(null, label, btnId), 2200);
 }
 
 /* Enregistre l'adresse Cloudinary dans la table Supabase */
-async function saveUploadRecord(type, url) {
-  const res = await fetch(`${SUPABASE.url}/rest/v1/${SUPABASE.table}`, {
+async function saveUploadRecord(type, url, table) {
+  const res = await fetch(`${SUPABASE.url}/rest/v1/${table}`, {
     method: 'POST',
     headers: {
       apikey: SUPABASE.anonKey,
@@ -1384,9 +1476,10 @@ async function saveUploadRecord(type, url) {
 
 /* Envoie le fichier choisi vers Cloudinary, puis note son adresse dans Supabase */
 /* Envoie UN fichier (Cloudinary + Supabase + affichage). Renvoie {ok, reason}. */
-function uploadOne(file, onProgress) {
+function uploadOne(file, onProgress, zoneKey = 'album') {
   return new Promise(resolve => {
     if (file.size > 100 * 1024 * 1024) { resolve({ ok: false, reason: 'size' }); return; }
+    const z = ZONE[zoneKey] || ZONE.album;
 
     const form = new FormData();
     form.append('file', file);
@@ -1412,9 +1505,8 @@ function uploadOne(file, onProgress) {
       if (type === 'video') url = url.replace(/\.\w+($|\?)/i, '.mp4'); // mp4 universel
       else url = url.replace('/upload/', '/upload/f_auto,q_auto/');     // image optimisée
       try {
-        await saveUploadRecord(type, url);
-        MEDIA.push({ type, src: url, caption: '' });
-        appendSlide(MEDIA.length - 1, MEDIA[MEDIA.length - 1]);
+        await saveUploadRecord(type, url, z.table);
+        z.add({ type, src: url, caption: '' });
         resolve({ ok: true });
       } catch (e) {
         console.error('Enregistrement Supabase échoué :', e);
@@ -1427,26 +1519,27 @@ function uploadOne(file, onProgress) {
 }
 
 /* Envoie PLUSIEURS fichiers à la suite, avec progression globale. */
-async function handleFiles(fileList) {
+async function handleFiles(fileList, zoneKey = 'album') {
+  const z = ZONE[zoneKey] || ZONE.album;
   const files = Array.from(fileList || []);
-  if (!files.length || $('upload-btn').classList.contains('busy')) return;
+  if (!files.length || $(z.btn).classList.contains('busy')) return;
 
   const total = files.length;
   let ok = 0, fail = 0;
   for (let i = 0; i < total; i++) {
     const head = total > 1 ? `Envoi ${i + 1}/${total}` : 'Envoi…';
-    setUploadState('busy', head);
+    setUploadState('busy', head, z.btn);
     const res = await uploadOne(files[i], frac => {
       const pct = Math.round(frac * 100);
-      setUploadState('busy', total > 1 ? `${head} · ${pct}%` : `Envoi… ${pct}%`);
-    });
+      setUploadState('busy', total > 1 ? `${head} · ${pct}%` : `Envoi… ${pct}%`, z.btn);
+    }, zoneKey);
     res.ok ? ok++ : fail++;
   }
 
-  if (fail === 0)    setUploadState('ok', total > 1 ? `${ok} ajoutés ✓` : 'Ajouté ✓');
-  else if (ok === 0) setUploadState('err', 'Échec ✗');
-  else               setUploadState('err', `${ok} ok · ${fail} échec`);
-  resetUploadSoon();
+  if (fail === 0)    setUploadState('ok', total > 1 ? `${ok} ajoutés ✓` : 'Ajouté ✓', z.btn);
+  else if (ok === 0) setUploadState('err', 'Échec ✗', z.btn);
+  else               setUploadState('err', `${ok} ok · ${fail} échec`, z.btn);
+  resetUploadSoon(z.btn, z.label);
 }
 
 /* ─────────────────────── VUE D'ENSEMBLE ─────────────────────── */
@@ -1577,6 +1670,96 @@ function enterClip() {
   startMusicOnce();
   pauseAlbum();
   showScreen('clip');
+  loadClips();
+}
+
+/* ─────────────────────── CLIP FARM (galerie + lightbox) ─────────────────────── */
+let clipsLoaded = false;
+
+/* Vignette carrée (Cloudinary) ; pour une vidéo on prend une image fixe (.jpg). */
+function clipThumb(item) {
+  const u = item.src;
+  if (item.type === 'video' && isCloudinary(u)) {
+    return u.replace(/\.mp4($|\?)/i, '.jpg').replace('/upload/', '/upload/w_500,h_500,c_fill,q_auto/');
+  }
+  if (isCloudinary(u)) return u.replace('/upload/', '/upload/w_500,h_500,c_fill/');
+  return u;
+}
+
+function clipCellEl(i, item) {
+  const cell = document.createElement('div');
+  cell.className = 'clip-cell' + (item.type === 'video' ? ' is-vid' : '');
+  const th = clipThumb(item);
+  if (th) {
+    const img = document.createElement('img');
+    img.loading = 'lazy'; img.decoding = 'async'; img.alt = '';
+    img.src = th;
+    img.onerror = () => { img.remove(); cell.classList.add('noimg'); };
+    cell.appendChild(img);
+  } else {
+    cell.classList.add('noimg');
+  }
+  if (item.type === 'video') {
+    const play = document.createElement('div');
+    play.className = 'clip-play'; play.textContent = '▶';
+    cell.appendChild(play);
+  }
+  cell.addEventListener('click', () => openClipLight(i));
+  return cell;
+}
+
+function updateClipEmpty() {
+  const e = $('clip-empty');
+  if (e) e.style.display = CLIP_MEDIA.length ? 'none' : '';
+}
+function buildClipGrid() {
+  const grid = $('clip-grid');
+  grid.innerHTML = '';
+  CLIP_MEDIA.forEach((item, i) => grid.appendChild(clipCellEl(i, item)));
+  updateClipEmpty();
+}
+function clipAddCell(i, item) {
+  $('clip-grid').appendChild(clipCellEl(i, item));
+  updateClipEmpty();
+}
+
+async function loadClips() {
+  if (clipsLoaded) return;
+  clipsLoaded = true;
+  const ups = await fetchUploads('clip');
+  CLIP_MEDIA.push(...ups);
+  buildClipGrid();
+}
+
+/* Lightbox : ouvre le clip en grand. Vidéo lue AVEC le son → on baisse la musique le temps du clip. */
+function openClipLight(i) {
+  const item = CLIP_MEDIA[i];
+  if (!item) return;
+  const body = $('clip-light-body');
+  body.innerHTML = '';
+  if (item.type === 'video') {
+    if (musicOn && !audio.paused) audio.pause();   // le clip a le son, on coupe la musique de fond
+    const v = document.createElement('video');
+    v.src = chooseSrc(item);
+    v.controls = true; v.autoplay = true; v.playsInline = true;
+    v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
+    body.appendChild(v);
+    v.play().catch(() => {});
+  } else {
+    const img = document.createElement('img');
+    img.src = item.src; img.alt = '';
+    body.appendChild(img);
+  }
+  $('clip-light').classList.add('on');
+}
+function closeClipLight() {
+  const body = $('clip-light-body');
+  const v = body.querySelector('video');
+  if (v) { try { v.pause(); v.removeAttribute('src'); v.load(); } catch (e) {} }
+  body.innerHTML = '';
+  $('clip-light').classList.remove('on');
+  // reprend la musique si elle était active avant le clip
+  if (musicOn && audio.paused && !document.hidden) audio.play().catch(() => {});
 }
 function goHome() {
   pauseAlbum();
@@ -1611,6 +1794,19 @@ function bindEvents() {
   $('next-btn').addEventListener('click', () => { goTo(idx + 1, 'next'); resetIdle(); });
   $('music-btn').addEventListener('click', e => { e.stopPropagation(); startMusicOnce(); toggleMusic(); });
   $('skip-btn').addEventListener('click', e => { e.stopPropagation(); startMusicOnce(); skipTrack(); });
+
+  // Coupe la musique quand on quitte l'onglet ou qu'on bascule d'appli (iOS la
+  // laissait tourner en fond comme Spotify). Reprend au retour si elle était active.
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      if (!audio.paused) audio.pause();
+    } else if (musicOn && audio.paused) {
+      audio.play().catch(() => {});
+    }
+  });
+
+  // Fin d'une chanson → on enchaîne sur la suivante de la playlist (au lieu de la rejouer).
+  audio.addEventListener('ended', () => loadTrack(trackIdx + 1, true));
   $('tap-l').addEventListener('click', () => { goTo(idx - 1, 'prev'); resetIdle(); });
   $('tap-r').addEventListener('click', () => { goTo(idx + 1, 'next'); resetIdle(); });
 
@@ -1622,8 +1818,21 @@ function bindEvents() {
     $('upload-input').click();
   });
   $('upload-input').addEventListener('change', () => {
-    handleFiles($('upload-input').files);
+    handleFiles($('upload-input').files, 'album');
   });
+
+  // Upload Clip Farm (zone séparée)
+  $('clip-upload-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    if ($('clip-upload-btn').classList.contains('busy')) return;
+    $('clip-upload-input').value = '';
+    $('clip-upload-input').click();
+  });
+  $('clip-upload-input').addEventListener('change', () => {
+    handleFiles($('clip-upload-input').files, 'clip');
+  });
+  $('clip-light-close').addEventListener('click', closeClipLight);
+  $('clip-light').addEventListener('click', e => { if (e.target === $('clip-light')) closeClipLight(); });
 
   // Vue d'ensemble
   $('ov-btn').addEventListener('click', e => { e.stopPropagation(); openOverview(); });
@@ -1661,7 +1870,7 @@ function bindEvents() {
 window.addEventListener('DOMContentLoaded', async () => {
   loadTrack(0, false);
   buildFloatPhotos();
-  const userUploads = await fetchUserUploads();   // tes 69 + tout ce qui a été ajouté depuis
+  const userUploads = await fetchUploads('album');   // tes 69 + tout ce qui a été ajouté depuis
   MEDIA.push(...userUploads);
   if (CONFIG.shuffle) shuffle(MEDIA);             // ordre aléatoire à chaque visite
   buildSlides();
