@@ -332,6 +332,137 @@ html, body {
   display: flex; align-items: center; justify-content: center;
 }
 #clip-light-close:hover { background: rgba(212,180,131,.18); }
+.clip-light-nav {
+  position: fixed; top: 50%; transform: translateY(-50%); z-index: 91;
+  width: 46px; height: 46px; border-radius: 50%;
+  background: rgba(10,9,7,.55); border: 1px solid rgba(212,180,131,.3);
+  color: var(--gold-bright); font-size: 1.7rem; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .25s, border-color .25s;
+}
+.clip-light-nav:hover { background: rgba(212,180,131,.18); border-color: var(--gold-bright); }
+#clip-light-prev { left: calc(env(safe-area-inset-left,0px) + .55rem); padding-right: 3px; }
+#clip-light-next { right: calc(env(safe-area-inset-right,0px) + .55rem); padding-left: 3px; }
+#clip-light-count {
+  position: fixed; bottom: calc(env(safe-area-inset-bottom,0px) + .9rem); left: 50%;
+  transform: translateX(-50%); z-index: 91; pointer-events: none;
+  font-family: 'Lato', sans-serif; font-size: .6rem; letter-spacing: .22em;
+  color: rgba(248,236,220,.6); text-shadow: 0 1px 6px rgba(0,0,0,.8);
+}
+.clip-light-fail {
+  font-family: 'Cormorant Garamond', serif; font-style: italic;
+  font-size: clamp(1.1rem, 4vw, 1.5rem); color: rgba(248,236,220,.55);
+  text-align: center; padding: 2rem;
+}
+
+/* ════════════════════════════════════════════════
+   MINI JEU (caméscope volant)
+════════════════════════════════════════════════ */
+#game { background: radial-gradient(ellipse at 50% 30%, #16110a 0%, #070707 72%); overflow: hidden; }
+#game-canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
+#game-score {
+  position: absolute; top: calc(env(safe-area-inset-top,0px) + 4.6rem); left: 50%;
+  transform: translateX(-50%); z-index: 5; pointer-events: none;
+  font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700;
+  font-size: clamp(2.4rem, 9vw, 3.6rem); color: var(--cream);
+  text-shadow: 0 4px 24px rgba(0,0,0,.8);
+}
+#game-hint {
+  position: absolute; top: 58%; left: 50%; transform: translateX(-50%); z-index: 5;
+  pointer-events: none; text-align: center; white-space: nowrap;
+  font-family: 'Lato', sans-serif; font-size: .68rem; font-weight: 300;
+  letter-spacing: .28em; text-transform: uppercase; color: rgba(248,236,220,.8);
+  text-shadow: 0 2px 14px rgba(0,0,0,.9); animation: hintPulse 1.4s ease infinite;
+}
+@keyframes hintPulse { 50% { opacity: .4; } }
+
+.game-panel {
+  position: absolute; inset: 0; z-index: 10;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; gap: .55rem;
+  padding: calc(env(safe-area-inset-top,0px) + 4rem) 1.4rem calc(env(safe-area-inset-bottom,0px) + 1.6rem);
+  background: radial-gradient(ellipse at 50% 38%, rgba(7,7,7,.78), rgba(7,7,7,.94));
+  overflow-y: auto;
+}
+.game-emoji { font-size: clamp(2.6rem, 10vw, 4rem); }
+.game-char-preview {
+  width: clamp(74px, 22vw, 102px); height: clamp(74px, 22vw, 102px);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: clamp(2.2rem, 8vw, 3.2rem); overflow: hidden;
+  background: rgba(212,180,131,.08) center/cover no-repeat;
+  border: 2px solid rgba(212,180,131,.4);
+  transition: border-color .25s, box-shadow .25s;
+}
+.game-char-preview.has-photo { border-color: var(--gold-bright); box-shadow: 0 6px 26px rgba(0,0,0,.45); }
+.game-char-row { display: flex; gap: .5rem; flex-wrap: wrap; justify-content: center; }
+.game-mini-btn {
+  padding: .5rem 1.05rem; background: rgba(10,9,7,.6);
+  border: 1px solid rgba(212,180,131,.35); border-radius: 100px;
+  color: var(--gold-bright); cursor: pointer;
+  font-family: 'Lato', sans-serif; font-size: .6rem; letter-spacing: .12em; text-transform: uppercase;
+  transition: background .25s, border-color .25s;
+}
+.game-mini-btn:hover { background: rgba(212,180,131,.14); border-color: var(--gold-bright); }
+.game-mini-btn:active { transform: scale(.96); }
+.game-title {
+  font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700;
+  font-size: clamp(2rem, 9vw, 3.4rem); color: var(--cream); line-height: 1;
+  text-shadow: 0 0 50px rgba(212,180,131,.3);
+}
+.game-sub {
+  font-family: 'Cormorant Garamond', serif; font-style: italic;
+  font-size: clamp(1rem, 3.4vw, 1.25rem); color: rgba(248,236,220,.82);
+  line-height: 1.45; max-width: 360px; margin-bottom: .4rem;
+}
+#game-pseudo {
+  width: min(78vw, 300px); text-align: center;
+  padding: .7rem 1rem; margin-top: .3rem;
+  background: rgba(10,9,7,.7); border: 1px solid rgba(212,180,131,.4);
+  border-radius: 100px; color: var(--cream);
+  font-family: 'Lato', sans-serif; font-size: .95rem; letter-spacing: .04em;
+  outline: none; transition: border-color .25s;
+}
+#game-pseudo:focus { border-color: var(--gold-bright); }
+#game-pseudo::placeholder { color: rgba(248,236,220,.4); text-transform: lowercase; letter-spacing: .2em; }
+.game-btn {
+  margin-top: .5rem; padding: .7rem 2rem;
+  background: linear-gradient(180deg, rgba(212,180,131,.95), rgba(184,150,100,.95));
+  border: none; border-radius: 100px; color: #1a140c; cursor: pointer;
+  font-family: 'Lato', sans-serif; font-size: .68rem; font-weight: 700;
+  letter-spacing: .22em; text-transform: uppercase;
+  box-shadow: 0 8px 26px rgba(212,180,131,.28); transition: transform .2s, box-shadow .2s;
+}
+.game-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(212,180,131,.4); }
+.game-btn:active { transform: translateY(0) scale(.97); }
+.game-msg { font-family: 'Lato', sans-serif; font-size: .62rem; letter-spacing: .12em; color: var(--gold-bright); min-height: 1em; }
+
+.game-over-title {
+  font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700;
+  font-size: clamp(2rem, 9vw, 3rem); color: var(--cream);
+}
+.game-over-score { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; color: rgba(248,236,220,.85); }
+.game-over-score b { color: var(--gold-bright); font-size: 1.7rem; }
+.game-over-best { font-family: 'Lato', sans-serif; font-size: .62rem; letter-spacing: .18em; text-transform: uppercase; color: var(--gold-bright); }
+.game-board-title {
+  margin-top: 1rem; font-family: 'Lato', sans-serif; font-size: .58rem;
+  letter-spacing: .3em; text-transform: uppercase; color: rgba(248,236,220,.55);
+}
+.game-board {
+  list-style: none; width: min(82vw, 330px); margin-top: .3rem; padding: 0;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.game-board li {
+  display: flex; align-items: center; gap: .6rem;
+  padding: .42rem .8rem; border-radius: 8px;
+  background: rgba(212,180,131,.06);
+  font-family: 'Lato', sans-serif; font-size: .8rem; color: rgba(248,236,220,.85);
+}
+.game-board li.me { background: rgba(212,180,131,.2); color: var(--cream); }
+.game-board .bd-rank { width: 1.4em; color: var(--gold-bright); font-weight: 700; text-align: center; }
+.game-board .bd-name { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.game-board .bd-score { font-weight: 700; color: var(--gold-bright); }
+.game-board-empty, .game-board-load { justify-content: center; color: rgba(248,236,220,.5) !important; font-style: italic; }
+.game-hidden { display: none !important; }
 
 /* ════════════════════════════════════════════════
    BOUTON RETOUR MENU
@@ -822,6 +953,11 @@ html, body {
         <div class="card-title">Clip Farm</div>
         <div class="card-desc">Le grand n'importe quoi · balance tes clips</div>
       </div>
+      <div class="card" id="card-game">
+        <div class="card-icon">🎮</div>
+        <div class="card-title">Mini Jeu</div>
+        <div class="card-desc">Caméscope volant · bats le record du clan</div>
+      </div>
     </div>
   </div>
 </div>
@@ -897,7 +1033,45 @@ html, body {
 <!-- ══════════ LIGHTBOX CLIP FARM ══════════ -->
 <div id="clip-light">
   <button id="clip-light-close" aria-label="Fermer">✕</button>
+  <button id="clip-light-prev" class="clip-light-nav" aria-label="Précédent">‹</button>
   <div id="clip-light-body"></div>
+  <button id="clip-light-next" class="clip-light-nav" aria-label="Suivant">›</button>
+  <div id="clip-light-count"></div>
+</div>
+
+<!-- ══════════ MINI JEU (caméscope volant) ══════════ -->
+<div id="game" class="screen">
+  <button class="back-btn" id="back-game" aria-label="Retour au menu">
+    <svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg> Menu
+  </button>
+  <canvas id="game-canvas"></canvas>
+  <div id="game-score" class="game-hidden">0</div>
+  <div id="game-hint" class="game-hidden">tape pour faire voler</div>
+
+  <!-- Pseudo -->
+  <div id="game-login" class="game-panel">
+    <div class="game-char-preview" id="game-char-preview">📹</div>
+    <div class="game-title">Mini Jeu</div>
+    <div class="game-sub">Fais voler ton perso, esquive les obstacles.<br>Ton pseudo garde ton record.</div>
+    <div class="game-char-row">
+      <button id="game-photo-btn" class="game-mini-btn" type="button">📷 prends-toi en photo</button>
+      <button id="game-photo-reset" class="game-mini-btn game-hidden" type="button">remettre 📹</button>
+    </div>
+    <input id="game-photo-input" type="file" accept="image/*" capture="user" hidden>
+    <input id="game-pseudo" type="text" maxlength="18" placeholder="ton pseudo" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <button id="game-start" class="game-btn">C'est parti</button>
+    <div id="game-login-msg" class="game-msg"></div>
+  </div>
+
+  <!-- Game over -->
+  <div id="game-over" class="game-panel game-hidden">
+    <div class="game-over-title">Perdu&nbsp;!</div>
+    <div class="game-over-score">Score <b id="go-score">0</b></div>
+    <div class="game-over-best">Ton record : <span id="go-best">0</span></div>
+    <button id="game-replay" class="game-btn">Rejouer</button>
+    <div class="game-board-title">Classement du clan</div>
+    <ol id="game-board" class="game-board"></ol>
+  </div>
 </div>
 
 <!-- ══════════ VUE D'ENSEMBLE (grille) ══════════ -->
@@ -1425,17 +1599,21 @@ function toggleMusic() {
   if (musicOn) { audio.pause(); musicOn = false; bars.classList.add('off'); }
   else { audio.play().then(() => { musicOn = true; bars.classList.remove('off'); }).catch(() => {}); }
 }
+/* Relance la musique si elle était active (utile en sortant de la Clip Farm où elle est coupée) */
+function resumeMusicIfOn() { if (musicOn && audio.paused && !document.hidden) audio.play().catch(() => {}); }
 
 /* ─────────────────────── UPLOAD VISITEURS ─────────────────────── */
 
-/* Lit ce que d'autres ont déjà ajouté (zone 'album' ou 'clip') */
+/* Lit ce que d'autres ont déjà ajouté (zone 'album' ou 'clip').
+   Tri par id (clé auto-incrémentée) = ordre d'ajout exact, même en cas d'envoi
+   multiple (où created_at pourrait être identique et brouiller l'ordre). */
 async function fetchUploads(zone) {
   const table = (ZONE[zone] || ZONE.album).table;
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 4000);
     const res = await fetch(
-      `${SUPABASE.url}/rest/v1/${table}?select=type,url,caption&order=created_at.asc`,
+      `${SUPABASE.url}/rest/v1/${table}?select=type,url,caption&order=id.asc`,
       { headers: { apikey: SUPABASE.anonKey, Authorization: `Bearer ${SUPABASE.anonKey}` }, signal: ctrl.signal }
     );
     clearTimeout(t);
@@ -1656,19 +1834,21 @@ async function downloadCurrent() {
 function showScreen(name) {
   $('home').classList.toggle('on', name === 'home');
   $('clip').classList.toggle('on', name === 'clip');
+  $('game').classList.toggle('on', name === 'game');
   $('album-view').classList.toggle('on', name === 'album');
 }
 
 function enterAlbum() {
   startMusicOnce();
+  resumeMusicIfOn();   // si on arrive depuis la Clip Farm (musique coupée), elle reprend
   showScreen('album');
   albumRunning = true;
   resetIdle(); showNav();
   activate(idx, false, 'next');
 }
 function enterClip() {
-  startMusicOnce();
   pauseAlbum();
+  if (!audio.paused) audio.pause();   // pas de musique dans la Clip Farm → le son des vidéos reste net
   showScreen('clip');
   loadClips();
 }
@@ -1731,26 +1911,44 @@ async function loadClips() {
   buildClipGrid();
 }
 
-/* Lightbox : ouvre le clip en grand. Vidéo lue AVEC le son → on baisse la musique le temps du clip. */
+/* Lightbox : ouvre le clip en grand et on peut défiler entre les clips (flèches, swipe, clavier).
+   La musique de fond est déjà coupée dans la Clip Farm → le son des vidéos reste net. */
+let clipLightIdx = -1;
 function openClipLight(i) {
-  const item = CLIP_MEDIA[i];
+  clipLightIdx = i;
+  renderClipLight();
+  $('clip-light').classList.add('on');
+}
+function renderClipLight() {
+  const item = CLIP_MEDIA[clipLightIdx];
   if (!item) return;
   const body = $('clip-light-body');
+  const old = body.querySelector('video');
+  if (old) { try { old.pause(); old.removeAttribute('src'); old.load(); } catch (e) {} }
   body.innerHTML = '';
+  const fail = () => { body.innerHTML = '<div class="clip-light-fail">clip indisponible 🤷</div>'; };
   if (item.type === 'video') {
-    if (musicOn && !audio.paused) audio.pause();   // le clip a le son, on coupe la musique de fond
     const v = document.createElement('video');
     v.src = chooseSrc(item);
     v.controls = true; v.autoplay = true; v.playsInline = true;
     v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
+    v.addEventListener('error', fail);
     body.appendChild(v);
     v.play().catch(() => {});
   } else {
     const img = document.createElement('img');
+    img.onerror = fail;
     img.src = item.src; img.alt = '';
     body.appendChild(img);
   }
-  $('clip-light').classList.add('on');
+  const c = $('clip-light-count');
+  if (c) c.textContent = CLIP_MEDIA.length ? `${clipLightIdx + 1} / ${CLIP_MEDIA.length}` : '';
+}
+function clipLightGo(delta) {
+  const n = CLIP_MEDIA.length;
+  if (!n) return;
+  clipLightIdx = ((clipLightIdx + delta) % n + n) % n;
+  renderClipLight();
 }
 function closeClipLight() {
   const body = $('clip-light-body');
@@ -1758,12 +1956,274 @@ function closeClipLight() {
   if (v) { try { v.pause(); v.removeAttribute('src'); v.load(); } catch (e) {} }
   body.innerHTML = '';
   $('clip-light').classList.remove('on');
-  // reprend la musique si elle était active avant le clip
-  if (musicOn && audio.paused && !document.hidden) audio.play().catch(() => {});
+}
+
+/* ─────────────────────── MINI JEU : caméscope volant ─────────────────────── */
+const GAME = {
+  characterUrl: '',   // ← mets l'URL d'une photo CARRÉE ici pour customiser le perso (sinon emoji 📹)
+  emoji: '📹',
+  // réglages (en fractions de la hauteur/largeur de l'écran → jouable sur tout format)
+  gravity: 0.00046, flap: 0.0100, gap: 0.33, speed: 0.0062, spacing: 0.70, birdR: 0.048,
+  graceMs: 800,       // petit délai avant le 1er obstacle
+};
+const SCORES_TABLE = 'scores';
+
+let gState = 'login';        // login | ready | playing | over
+let gPseudo = '', gBest = 0;
+let gCanvas, gctx, gW = 0, gH = 0, gDPR = 1;
+let gBird = null, gPipes = [], gScore = 0, gRAF = 0, gCharImg = null, gLastT = 0, gStartT = 0;
+let gameReady = false;
+
+function gameInit() {
+  if (!gameReady) {
+    gCanvas = $('game-canvas');
+    gctx = gCanvas.getContext('2d');
+    loadGameChar();        // photo perso enregistrée (ou emoji 📹 par défaut)
+    gameReady = true;
+  }
+  sizeGameCanvas();
+}
+
+/* ── Perso personnalisable (photo prise par le joueur, gardée sur SON téléphone) ── */
+const GAME_CHAR_KEY = 'minijeu_char';
+function loadGameChar() {
+  let d = '';
+  try { d = localStorage.getItem(GAME_CHAR_KEY) || ''; } catch (e) {}
+  if (!d && GAME.characterUrl) d = GAME.characterUrl;
+  if (d) applyGameChar(d, false);
+  updateCharPreview();
+}
+function applyGameChar(src, save) {
+  GAME.characterUrl = src;
+  gCharImg = new Image();
+  if (/^https?:/.test(src)) gCharImg.crossOrigin = 'anonymous';
+  gCharImg.onload = () => { updateCharPreview(); if (gState !== 'playing') gameDraw(); };
+  gCharImg.src = src;
+  if (save) { try { localStorage.setItem(GAME_CHAR_KEY, src); } catch (e) {} }
+}
+function clearGameChar() {
+  GAME.characterUrl = ''; gCharImg = null;
+  try { localStorage.removeItem(GAME_CHAR_KEY); } catch (e) {}
+  updateCharPreview();
+  if (gState !== 'playing') gameDraw();
+}
+function updateCharPreview() {
+  const el = $('game-char-preview');
+  if (!el) return;
+  if (GAME.characterUrl) {
+    el.textContent = ''; el.style.backgroundImage = `url("${GAME.characterUrl}")`; el.classList.add('has-photo');
+    $('game-photo-reset').classList.remove('game-hidden');
+  } else {
+    el.style.backgroundImage = ''; el.textContent = GAME.emoji; el.classList.remove('has-photo');
+    $('game-photo-reset').classList.add('game-hidden');
+  }
+}
+/* Prend le fichier (photo de l'appareil), recadre au carré centré, garde en mémoire locale. */
+function onPhotoPicked(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const size = Math.min(img.naturalWidth, img.naturalHeight);
+      const sx = (img.naturalWidth - size) / 2, sy = (img.naturalHeight - size) / 2;
+      const out = 320;
+      const cv = document.createElement('canvas'); cv.width = out; cv.height = out;
+      cv.getContext('2d').drawImage(img, sx, sy, size, size, 0, 0, out, out);
+      applyGameChar(cv.toDataURL('image/jpeg', 0.85), true);
+    };
+    img.onerror = () => { $('game-login-msg').textContent = 'photo illisible'; };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+function sizeGameCanvas() {
+  if (!gCanvas) return;
+  gDPR = Math.min(window.devicePixelRatio || 1, 2);
+  gW = gCanvas.clientWidth || window.innerWidth;
+  gH = gCanvas.clientHeight || window.innerHeight;
+  gCanvas.width = Math.round(gW * gDPR);
+  gCanvas.height = Math.round(gH * gDPR);
+  gctx.setTransform(gDPR, 0, 0, gDPR, 0, 0);
+  if (gState !== 'playing') gameDraw();
+}
+function gameReset() {
+  gBird = { x: gW * 0.30, y: gH * 0.42, v: 0, r: Math.max(15, Math.min(gW, gH) * GAME.birdR) };
+  gPipes = []; gScore = 0;
+  $('game-score').textContent = '0';
+}
+function gameFlap() {
+  if (gState === 'ready') { gameRun(); return; }
+  if (gState !== 'playing') return;
+  gBird.v = -gH * GAME.flap;
+}
+function gameRun() {
+  gState = 'playing';
+  $('game-hint').classList.add('game-hidden');
+  $('game-score').classList.remove('game-hidden');
+  gBird.v = -gH * GAME.flap;
+  gLastT = performance.now();
+  gStartT = gLastT;
+  cancelAnimationFrame(gRAF);
+  const loop = (t) => {
+    const dt = Math.min((t - gLastT) / 16.667, 2.5); gLastT = t;
+    gameStep(dt); gameDraw();
+    if (gState === 'playing') gRAF = requestAnimationFrame(loop);
+  };
+  gRAF = requestAnimationFrame(loop);
+}
+function gameStep(dt) {
+  gBird.v += gH * GAME.gravity * dt;       // gravité
+  gBird.y += gBird.v * dt;
+  const pw = Math.max(44, gW * 0.14);
+  const last = gPipes[gPipes.length - 1];
+  const elapsed = performance.now() - gStartT;
+  if (elapsed > GAME.graceMs && (!last || last.x < gW - gW * GAME.spacing)) {  // espacement constant + délai initial
+    const gap = gH * GAME.gap, m = gH * 0.09;
+    const top = m + Math.random() * (gH - gap - m * 2);
+    gPipes.push({ x: gW + 4, top, gap, w: pw, passed: false });
+  }
+  const sp = gW * GAME.speed * dt;
+  for (const p of gPipes) {
+    p.x -= sp;
+    if (!p.passed && p.x + p.w < gBird.x) { p.passed = true; gScore++; $('game-score').textContent = gScore; }
+  }
+  gPipes = gPipes.filter(p => p.x + p.w > -20);
+  if (gBird.y + gBird.r > gH || gBird.y - gBird.r < 0) return gameOver();
+  for (const p of gPipes) {
+    if (gBird.x + gBird.r > p.x && gBird.x - gBird.r < p.x + p.w &&
+        (gBird.y - gBird.r < p.top || gBird.y + gBird.r > p.top + p.gap)) return gameOver();
+  }
+}
+function gameRRect(c, x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  c.beginPath(); c.moveTo(x + r, y);
+  c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
+  c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
+}
+function gameDraw() {
+  if (!gctx) return;
+  gctx.clearRect(0, 0, gW, gH);
+  for (const p of gPipes) {
+    const grd = gctx.createLinearGradient(p.x, 0, p.x + p.w, 0);
+    grd.addColorStop(0, 'rgba(212,180,131,.55)'); grd.addColorStop(.5, 'rgba(232,207,160,.95)'); grd.addColorStop(1, 'rgba(184,150,100,.6)');
+    gctx.fillStyle = grd;
+    gameRRect(gctx, p.x, -8, p.w, p.top + 8, 7); gctx.fill();
+    gameRRect(gctx, p.x, p.top + p.gap, p.w, gH - p.top - p.gap + 8, 7); gctx.fill();
+  }
+  if (!gBird) return;
+  if (gCharImg && gCharImg.complete && gCharImg.naturalWidth) {
+    gctx.save();
+    gctx.beginPath(); gctx.arc(gBird.x, gBird.y, gBird.r, 0, Math.PI * 2); gctx.closePath(); gctx.clip();
+    gctx.drawImage(gCharImg, gBird.x - gBird.r, gBird.y - gBird.r, gBird.r * 2, gBird.r * 2);
+    gctx.restore();
+    gctx.lineWidth = 2.5; gctx.strokeStyle = 'rgba(232,207,160,.85)';
+    gctx.beginPath(); gctx.arc(gBird.x, gBird.y, gBird.r, 0, Math.PI * 2); gctx.stroke();
+  } else {
+    const tilt = Math.max(-0.5, Math.min(0.9, gBird.v * 0.05));
+    gctx.save(); gctx.translate(gBird.x, gBird.y); gctx.rotate(tilt);
+    gctx.font = `${gBird.r * 2}px system-ui, "Apple Color Emoji", sans-serif`;
+    gctx.textAlign = 'center'; gctx.textBaseline = 'middle';
+    gctx.fillText(GAME.emoji, 0, 0); gctx.restore();
+  }
+}
+function gameOver() {
+  if (gState !== 'playing') return;
+  gState = 'over';
+  cancelAnimationFrame(gRAF);
+  $('go-score').textContent = gScore;
+  if (gScore > gBest) { gBest = gScore; saveScore(gPseudo, gBest); }
+  $('go-best').textContent = gBest;
+  $('game-score').classList.add('game-hidden');
+  $('game-over').classList.remove('game-hidden');
+  loadBoard();
+}
+function gameReplay() {
+  $('game-over').classList.add('game-hidden');
+  gameReset(); gState = 'ready';
+  $('game-hint').textContent = gBest ? `record : ${gBest} · tape pour voler` : 'tape pour faire voler';
+  $('game-hint').classList.remove('game-hidden');
+  gameDraw();
+}
+async function gameDoLogin() {
+  const p = $('game-pseudo').value.trim().replace(/\s+/g, ' ').slice(0, 18);
+  if (!p) { $('game-login-msg').textContent = 'écris un pseudo'; return; }
+  gPseudo = p;
+  $('game-login-msg').textContent = 'chargement…';
+  gBest = await fetchScore(p);
+  $('game-login').classList.add('game-hidden');
+  gameReset(); gState = 'ready';
+  $('game-hint').textContent = gBest ? `record : ${gBest} · tape pour voler` : 'tape pour faire voler';
+  $('game-hint').classList.remove('game-hidden');
+  gameDraw();
+}
+
+/* ── Scores (Supabase) ── */
+async function fetchScore(pseudo) {
+  try {
+    const res = await fetch(`${SUPABASE.url}/rest/v1/${SCORES_TABLE}?pseudo=eq.${encodeURIComponent(pseudo)}&select=score`,
+      { headers: { apikey: SUPABASE.anonKey, Authorization: `Bearer ${SUPABASE.anonKey}` } });
+    if (!res.ok) return 0;
+    const rows = await res.json();
+    return rows.length ? (rows[0].score || 0) : 0;
+  } catch (e) { return 0; }
+}
+async function saveScore(pseudo, score) {
+  try {
+    await fetch(`${SUPABASE.url}/rest/v1/${SCORES_TABLE}`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE.anonKey, Authorization: `Bearer ${SUPABASE.anonKey}`,
+                 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify({ pseudo, score, updated_at: new Date().toISOString() }),
+    });
+  } catch (e) {}
+}
+async function loadBoard() {
+  const board = $('game-board');
+  board.innerHTML = '<li class="game-board-load">…</li>';
+  try {
+    const res = await fetch(`${SUPABASE.url}/rest/v1/${SCORES_TABLE}?select=pseudo,score&order=score.desc&limit=15`,
+      { headers: { apikey: SUPABASE.anonKey, Authorization: `Bearer ${SUPABASE.anonKey}` } });
+    const rows = res.ok ? await res.json() : [];
+    board.innerHTML = '';
+    if (!rows.length) { board.innerHTML = '<li class="game-board-empty">aucun score encore — sois le premier</li>'; return; }
+    rows.forEach((r, i) => {
+      const li = document.createElement('li');
+      if (r.pseudo === gPseudo) li.className = 'me';
+      const rank = document.createElement('span'); rank.className = 'bd-rank'; rank.textContent = (i + 1);
+      const name = document.createElement('span'); name.className = 'bd-name'; name.textContent = r.pseudo;
+      const sc = document.createElement('span'); sc.className = 'bd-score'; sc.textContent = r.score;
+      li.append(rank, name, sc);
+      board.appendChild(li);
+    });
+  } catch (e) { board.innerHTML = '<li class="game-board-empty">classement indisponible</li>'; }
+}
+
+function enterGame() {
+  pauseAlbum();
+  startMusicOnce(); resumeMusicIfOn();
+  showScreen('game');
+  gameInit();
+  cancelAnimationFrame(gRAF);
+  $('game-over').classList.add('game-hidden');
+  $('game-score').classList.add('game-hidden');
+  if (gPseudo) {
+    $('game-login').classList.add('game-hidden');
+    gameReset(); gState = 'ready';
+    $('game-hint').textContent = gBest ? `record : ${gBest} · tape pour voler` : 'tape pour faire voler';
+    $('game-hint').classList.remove('game-hidden');
+    gameDraw();
+  } else {
+    $('game-login').classList.remove('game-hidden');
+    $('game-hint').classList.add('game-hidden');
+    gState = 'login';
+  }
 }
 function goHome() {
+  cancelAnimationFrame(gRAF);   // stoppe la boucle du jeu si on en sortait
   pauseAlbum();
   showScreen('home');
+  resumeMusicIfOn();   // en revenant de la Clip Farm, la musique reprend
 }
 function pauseAlbum() {
   albumRunning = false;
@@ -1833,6 +2293,42 @@ function bindEvents() {
   });
   $('clip-light-close').addEventListener('click', closeClipLight);
   $('clip-light').addEventListener('click', e => { if (e.target === $('clip-light')) closeClipLight(); });
+  $('clip-light-prev').addEventListener('click', e => { e.stopPropagation(); clipLightGo(-1); });
+  $('clip-light-next').addEventListener('click', e => { e.stopPropagation(); clipLightGo(1); });
+  // Swipe pour défiler les clips (sauf sur la vidéo elle-même, pour ne pas gêner ses contrôles)
+  let clipTouchX = null;
+  $('clip-light').addEventListener('touchstart', e => {
+    clipTouchX = e.target.tagName === 'VIDEO' ? null : e.changedTouches[0].clientX;
+  }, { passive: true });
+  $('clip-light').addEventListener('touchend', e => {
+    if (clipTouchX == null) return;
+    const dx = e.changedTouches[0].clientX - clipTouchX;
+    if (Math.abs(dx) > 50) clipLightGo(dx < 0 ? 1 : -1);
+    clipTouchX = null;
+  });
+  // Clavier (PC) : flèches pour défiler, Échap pour fermer
+  document.addEventListener('keydown', e => {
+    if (!$('clip-light').classList.contains('on')) return;
+    if (e.key === 'ArrowRight') clipLightGo(1);
+    else if (e.key === 'ArrowLeft') clipLightGo(-1);
+    else if (e.key === 'Escape') closeClipLight();
+  });
+
+  // Mini Jeu
+  $('card-game').addEventListener('click', enterGame);
+  $('back-game').addEventListener('click', goHome);
+  $('game-start').addEventListener('click', gameDoLogin);
+  $('game-pseudo').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); gameDoLogin(); } });
+  $('game-photo-btn').addEventListener('click', () => $('game-photo-input').click());
+  $('game-photo-input').addEventListener('change', e => { onPhotoPicked(e.target.files[0]); e.target.value = ''; });
+  $('game-photo-reset').addEventListener('click', clearGameChar);
+  $('game-replay').addEventListener('click', gameReplay);
+  $('game-canvas').addEventListener('pointerdown', e => { e.preventDefault(); gameFlap(); });
+  document.addEventListener('keydown', e => {
+    if (!$('game').classList.contains('on') || gState === 'login') return;
+    if (e.code === 'Space') { e.preventDefault(); gameFlap(); }
+  });
+  window.addEventListener('resize', () => { if ($('game').classList.contains('on')) sizeGameCanvas(); });
 
   // Vue d'ensemble
   $('ov-btn').addEventListener('click', e => { e.stopPropagation(); openOverview(); });
