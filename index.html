@@ -564,6 +564,79 @@ html, body {
 #dl-btn.err { border-color: #e08a8a; }
 #dl-btn.err svg { stroke: #f2b8b8; }
 
+/* Bouton commentaires (même style) + pastille de nombre */
+#cm-btn {
+  position: relative; display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; flex-shrink: 0;
+  background: rgba(10,9,7,.6); border: 1px solid rgba(212,180,131,.3);
+  border-radius: 9px; cursor: pointer; pointer-events: auto;
+  transition: background .3s var(--ease-soft), border-color .3s var(--ease-soft), transform .25s;
+}
+#cm-btn:hover { background: rgba(212,180,131,.14); border-color: var(--gold); }
+#cm-btn:active { transform: scale(.9); }
+#cm-btn svg { width: 18px; height: 18px; stroke: var(--gold-bright); fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.cm-count {
+  position: absolute; top: -6px; right: -6px; min-width: 16px; height: 16px; padding: 0 4px;
+  border-radius: 8px; background: var(--gold-bright); color: #1a140c;
+  font-family: 'Lato', sans-serif; font-size: .55rem; font-weight: 700; line-height: 16px;
+  text-align: center; display: none;
+}
+.cm-count.show { display: block; }
+
+/* Feuille de commentaires (monte du bas) */
+#comments {
+  position: fixed; inset: 0; z-index: 80; background: rgba(4,4,4,.6);
+  display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; visibility: hidden; transition: opacity .3s var(--ease-soft), visibility .3s;
+}
+#comments.on { opacity: 1; visibility: visible; }
+.cm-sheet {
+  width: 100%; max-width: 560px; max-height: 80vh; max-height: 80dvh;
+  display: flex; flex-direction: column;
+  background: linear-gradient(180deg, #181206, #0d0a06);
+  border: 1px solid rgba(212,180,131,.25); border-bottom: none;
+  border-radius: 20px 20px 0 0; box-shadow: 0 -16px 50px rgba(0,0,0,.6);
+  transform: translateY(100%); transition: transform .35s var(--ease-soft);
+  padding-bottom: env(safe-area-inset-bottom,0px);
+}
+#comments.on .cm-sheet { transform: translateY(0); }
+.cm-head { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.2rem .5rem; }
+.cm-title { font-family: 'Playfair Display', serif; font-style: italic; font-size: 1.35rem; color: var(--cream); }
+#cm-close {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  background: rgba(212,180,131,.1); border: 1px solid rgba(212,180,131,.3);
+  color: var(--gold-bright); cursor: pointer; font-size: .85rem;
+  display: flex; align-items: center; justify-content: center;
+}
+.cm-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: .3rem 1.2rem 1rem; min-height: 80px; }
+.cm-comment { padding: .55rem 0; border-bottom: 1px solid rgba(212,180,131,.08); }
+.cm-comment:last-child { border-bottom: none; }
+.cm-author { font-family: 'Lato', sans-serif; font-size: .68rem; font-weight: 700; letter-spacing: .04em; color: var(--gold-bright); }
+.cm-when { font-family: 'Lato', sans-serif; font-size: .55rem; color: rgba(248,236,220,.4); margin-left: .5rem; }
+.cm-body { font-family: 'Cormorant Garamond', serif; font-size: 1.14rem; color: rgba(248,236,220,.92); line-height: 1.4; margin-top: .12rem; word-break: break-word; }
+.cm-empty { text-align: center; padding: 1.8rem 1rem; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1.15rem; color: rgba(248,236,220,.5); }
+.cm-form { padding: .6rem 1.2rem 1rem; border-top: 1px solid rgba(212,180,131,.12); background: rgba(0,0,0,.22); }
+#cm-name {
+  width: 100%; margin-bottom: .5rem; padding: .5rem .95rem;
+  background: rgba(10,9,7,.6); border: 1px solid rgba(212,180,131,.25); border-radius: 100px;
+  color: var(--cream); font-family: 'Lato', sans-serif; font-size: .8rem; outline: none;
+}
+#cm-name:focus { border-color: rgba(212,180,131,.55); }
+.cm-row { display: flex; gap: .5rem; }
+#cm-text {
+  flex: 1; padding: .6rem 1rem;
+  background: rgba(10,9,7,.6); border: 1px solid rgba(212,180,131,.3); border-radius: 100px;
+  color: var(--cream); font-family: 'Lato', sans-serif; font-size: .85rem; outline: none;
+}
+#cm-text:focus { border-color: var(--gold-bright); }
+#cm-send {
+  flex-shrink: 0; width: 44px; height: 40px; border-radius: 100px;
+  background: var(--gold-bright); border: none; color: #1a140c; cursor: pointer;
+  font-size: 1rem; transition: transform .2s, opacity .2s;
+}
+#cm-send:hover { transform: scale(1.06); }
+#cm-send:disabled { opacity: .4; cursor: default; }
+
 #overview {
   position: fixed; inset: 0; z-index: 80;
   background: rgba(6,6,6,.97);
@@ -987,6 +1060,10 @@ html, body {
         <button id="dl-btn" aria-label="Enregistrer dans la galerie" title="Enregistrer dans ma galerie">
           <svg viewBox="0 0 24 24" fill="none"><path d="M12 4v10"/><path d="M8 10.5l4 4 4-4"/><path d="M5 19h14"/></svg>
         </button>
+        <button id="cm-btn" aria-label="Commentaires" title="Commentaires">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M20 11.4a7.6 7.6 0 0 1-10.9 6.8L4.5 19.5l1.4-4.4A7.6 7.6 0 1 1 20 11.4z"/></svg>
+          <span class="cm-count" id="cm-count"></span>
+        </button>
         <div id="counter"></div>
       </div>
       <div id="caption"></div>
@@ -1081,6 +1158,24 @@ html, body {
     <button id="ov-close" aria-label="Fermer">✕</button>
   </div>
   <div class="ov-grid" id="ov-grid"></div>
+</div>
+
+<!-- ══════════ COMMENTAIRES (par photo) ══════════ -->
+<div id="comments">
+  <div class="cm-sheet">
+    <div class="cm-head">
+      <span class="cm-title">Commentaires</span>
+      <button id="cm-close" aria-label="Fermer">✕</button>
+    </div>
+    <div class="cm-list" id="cm-list"></div>
+    <div class="cm-form">
+      <input id="cm-name" type="text" placeholder="ton nom" maxlength="24" autocomplete="off" autocapitalize="words">
+      <div class="cm-row">
+        <input id="cm-text" type="text" placeholder="écris un commentaire…" maxlength="280" autocomplete="off">
+        <button id="cm-send" aria-label="Envoyer">➤</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ══════════ BOUTON CLASH OF CLANS (global) ══════════ -->
@@ -1512,6 +1607,7 @@ function activate(i, silent, dir = 'next') {
   slide.classList.add('active', dir === 'prev' ? 'dir-prev' : 'dir-next');
 
   updateCounter(i);
+  updateCommentBadge(i);
 
   // Légende
   const capEl = $('caption');
@@ -1786,6 +1882,122 @@ function closeOverview(resume) {
   if (resume && albumRunning) activate(idx, false, 'next'); // reprend la slide courante
 }
 
+/* ─────────────────────── COMMENTAIRES (par photo) ─────────────────────── */
+const COMMENTS_TABLE = 'comments';
+let commentsOpen = false, commentKey = '', commentCounts = {};
+
+function mediaKey(item) { return (item && item.src) || ''; }
+
+function timeAgo(ts) {
+  if (!ts) return '';
+  const d = (Date.now() - new Date(ts).getTime()) / 1000;
+  if (d < 60) return "à l'instant";
+  if (d < 3600) return `il y a ${Math.floor(d / 60)} min`;
+  if (d < 86400) return `il y a ${Math.floor(d / 3600)} h`;
+  if (d < 604800) return `il y a ${Math.floor(d / 86400)} j`;
+  try { return new Date(ts).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }); } catch (e) { return ''; }
+}
+
+/* Compte les commentaires par photo (1 requête au chargement) → pastille sur le bouton */
+async function loadCommentCounts() {
+  try {
+    const res = await fetch(`${SUPABASE.url}/rest/v1/${COMMENTS_TABLE}?select=media_key`,
+      { headers: { apikey: SUPABASE.anonKey, Authorization: `Bearer ${SUPABASE.anonKey}` } });
+    if (!res.ok) return;
+    const rows = await res.json();
+    const map = {};
+    for (const r of rows) map[r.media_key] = (map[r.media_key] || 0) + 1;
+    commentCounts = map;
+    updateCommentBadge();
+  } catch (e) {}
+}
+function updateCommentBadge(i = idx) {
+  const el = $('cm-count');
+  if (!el) return;
+  const n = commentCounts[mediaKey(MEDIA[i])] || 0;
+  el.textContent = n > 99 ? '99+' : n;
+  el.classList.toggle('show', n > 0);
+}
+
+function openComments() {
+  if (!albumRunning) return;
+  commentsOpen = true;
+  clearTimeout(autoTimer);
+  const v = document.querySelector('.slide.active video.slide-media');
+  if (v) { clearTimeout(v._capT); v.pause(); }
+  commentKey = mediaKey(MEDIA[idx]);
+  try { $('cm-name').value = localStorage.getItem('cm_name') || ''; } catch (e) {}
+  $('cm-text').value = ''; $('cm-text').placeholder = 'écris un commentaire…';
+  $('cm-list').innerHTML = '<div class="cm-empty">chargement…</div>';
+  $('comments').classList.add('on');
+  loadComments();
+}
+function closeComments() {
+  commentsOpen = false;
+  $('comments').classList.remove('on');
+  if (!albumRunning) return;
+  const item = MEDIA[idx];
+  if (item && item.type === 'video') {
+    const v = document.querySelector('.slide.active video.slide-media');
+    if (v) v.play().catch(() => {});
+  } else {
+    scheduleNext();
+  }
+}
+async function loadComments() {
+  const key = commentKey;
+  try {
+    const res = await fetch(
+      `${SUPABASE.url}/rest/v1/${COMMENTS_TABLE}?media_key=eq.${encodeURIComponent(key)}&select=author,body,created_at&order=created_at.asc`,
+      { headers: { apikey: SUPABASE.anonKey, Authorization: `Bearer ${SUPABASE.anonKey}` } });
+    if (key !== commentKey) return;   // l'utilisateur a déjà changé de photo
+    renderComments(res.ok ? await res.json() : []);
+  } catch (e) { renderComments([]); }
+}
+function renderComments(rows) {
+  const list = $('cm-list');
+  list.innerHTML = '';
+  if (!rows.length) { list.innerHTML = '<div class="cm-empty">Aucun commentaire… sois le premier 💬</div>'; return; }
+  rows.forEach(r => list.appendChild(commentEl(r)));
+  list.scrollTop = list.scrollHeight;
+}
+function commentEl(r) {
+  const wrap = document.createElement('div'); wrap.className = 'cm-comment';
+  const head = document.createElement('div');
+  const a = document.createElement('span'); a.className = 'cm-author'; a.textContent = r.author || 'Anonyme';
+  const w = document.createElement('span'); w.className = 'cm-when'; w.textContent = timeAgo(r.created_at);
+  head.append(a, w);
+  const body = document.createElement('div'); body.className = 'cm-body'; body.textContent = r.body || '';
+  wrap.append(head, body);
+  return wrap;
+}
+async function postComment() {
+  const text = $('cm-text').value.trim();
+  if (!text) return;
+  const name = ($('cm-name').value.trim() || 'Anonyme').slice(0, 24);
+  const key = commentKey;
+  try { localStorage.setItem('cm_name', name === 'Anonyme' ? '' : name); } catch (e) {}
+  $('cm-send').disabled = true;
+  const row = { author: name, body: text.slice(0, 280), created_at: new Date().toISOString() };
+  try {
+    const res = await fetch(`${SUPABASE.url}/rest/v1/${COMMENTS_TABLE}`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE.anonKey, Authorization: `Bearer ${SUPABASE.anonKey}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({ media_key: key, author: name, body: row.body }),
+    });
+    if (!res.ok) throw new Error('post');
+    if ($('cm-list').querySelector('.cm-empty')) $('cm-list').innerHTML = '';
+    $('cm-list').appendChild(commentEl(row));
+    $('cm-list').scrollTop = $('cm-list').scrollHeight;
+    $('cm-text').value = '';
+    commentCounts[key] = (commentCounts[key] || 0) + 1;
+    if (key === mediaKey(MEDIA[idx])) updateCommentBadge();
+  } catch (e) {
+    $('cm-text').placeholder = 'échec — réessaie';
+  }
+  $('cm-send').disabled = false;
+}
+
 /* ─────────────────────── TÉLÉCHARGER LA PHOTO/VIDÉO COURANTE ───────────────────────
    iPhone : navigator.share({files}) ouvre la feuille de partage → « Enregistrer
    l'image / la vidéo » dans la galerie. PC & Android : repli <a download>. */
@@ -1965,6 +2177,12 @@ const GAME = {
   // réglages (en fractions de la hauteur/largeur de l'écran → jouable sur tout format)
   gravity: 0.00046, flap: 0.0100, gap: 0.33, speed: 0.0062, spacing: 0.70, birdR: 0.048,
   graceMs: 800,       // petit délai avant le 1er obstacle
+  // difficulté progressive : au-delà de `hardenFrom`, le trou rétrécit de `gapStep`
+  // par point, jusqu'à un minimum `gapMin` (pour rester jouable).
+  hardenFrom: 5, gapStep: 0.007, gapMin: 0.21,
+  // difficulté progressive : à partir de hardenFrom points, le trou rétrécit
+  // de hardenStep par point, jusqu'à un minimum gapMin (reste franchissable).
+  gapMin: 0.21, hardenFrom: 4, hardenStep: 0.011,
 };
 const SCORES_TABLE = 'scores';
 
@@ -2079,7 +2297,10 @@ function gameStep(dt) {
   const last = gPipes[gPipes.length - 1];
   const elapsed = performance.now() - gStartT;
   if (elapsed > GAME.graceMs && (!last || last.x < gW - gW * GAME.spacing)) {  // espacement constant + délai initial
-    const gap = gH * GAME.gap, m = gH * 0.09;
+    // le trou rétrécit avec le score (au-delà du seuil), borné à gapMin
+    const over = Math.max(0, gScore - GAME.hardenFrom);
+    const gapFrac = Math.max(GAME.gapMin, GAME.gap - over * GAME.gapStep);
+    const gap = gH * gapFrac, m = gH * 0.09;
     const top = m + Math.random() * (gH - gap - m * 2);
     gPipes.push({ x: gW + 4, top, gap, w: pw, passed: false });
   }
@@ -2333,6 +2554,11 @@ function bindEvents() {
   // Vue d'ensemble
   $('ov-btn').addEventListener('click', e => { e.stopPropagation(); openOverview(); });
   $('dl-btn').addEventListener('click', e => { e.stopPropagation(); downloadCurrent(); });
+  $('cm-btn').addEventListener('click', e => { e.stopPropagation(); openComments(); });
+  $('cm-close').addEventListener('click', closeComments);
+  $('comments').addEventListener('click', e => { if (e.target === $('comments')) closeComments(); });
+  $('cm-send').addEventListener('click', postComment);
+  $('cm-text').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); postComment(); } });
   $('ov-close').addEventListener('click', () => closeOverview(true));
 
   document.addEventListener('keydown', e => {
@@ -2371,6 +2597,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   if (CONFIG.shuffle) shuffle(MEDIA);             // ordre aléatoire à chaque visite
   buildSlides();
   bindEvents();
+  loadCommentCounts();                            // pastilles de commentaires (1 requête, non bloquant)
 });
 </script>
 </body>
