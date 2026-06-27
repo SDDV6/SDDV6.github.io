@@ -653,6 +653,58 @@ html, body {
 #cm-send:hover { transform: scale(1.06); }
 #cm-send:disabled { opacity: .4; cursor: default; }
 
+/* ── Albums créés : carte de création + titre + modal ── */
+.card-create { border-style: dashed; }
+.card-create .card-icon { opacity: .85; }
+
+#album-title {
+  position: fixed; top: 30%; left: 50%; transform: translate(-50%, -50%);
+  z-index: 24; pointer-events: none; text-align: center; max-width: 82%;
+  font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700;
+  font-size: clamp(1.8rem, 7vw, 3rem); color: var(--cream);
+  text-shadow: 0 4px 30px rgba(0,0,0,.92); opacity: 0;
+}
+#album-title.show { animation: albumTitleShow 2.6s var(--ease-soft) both; }
+@keyframes albumTitleShow {
+  0% { opacity: 0; transform: translate(-50%,-42%); }
+  18%,55% { opacity: 1; transform: translate(-50%,-50%); }
+  100% { opacity: 0; transform: translate(-50%,-56%); }
+}
+
+#create-album {
+  position: fixed; inset: 0; z-index: 85; background: rgba(4,4,4,.72);
+  display: flex; align-items: center; justify-content: center; padding: 1.2rem;
+  opacity: 0; visibility: hidden; transition: opacity .3s var(--ease-soft), visibility .3s;
+}
+#create-album.on { opacity: 1; visibility: visible; }
+.ca-box {
+  width: 100%; max-width: 420px; text-align: center;
+  background: linear-gradient(180deg, #181206, #0d0a06);
+  border: 1px solid rgba(212,180,131,.3); border-radius: 18px;
+  padding: 1.6rem 1.4rem; box-shadow: 0 20px 60px rgba(0,0,0,.6);
+  transform: translateY(14px) scale(.98); transition: transform .3s var(--ease-soft);
+}
+#create-album.on .ca-box { transform: translateY(0) scale(1); }
+.ca-title { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; font-size: 1.8rem; color: var(--cream); }
+.ca-sub { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1.05rem; color: rgba(248,236,220,.75); margin: .3rem 0 1.1rem; }
+.ca-box input {
+  width: 100%; margin-bottom: .6rem; padding: .7rem 1rem;
+  background: rgba(10,9,7,.6); border: 1px solid rgba(212,180,131,.3); border-radius: 100px;
+  color: var(--cream); font-family: 'Lato', sans-serif; font-size: .9rem; outline: none; text-align: center;
+}
+.ca-box input:focus { border-color: var(--gold-bright); }
+.ca-actions { display: flex; gap: .6rem; margin-top: .4rem; }
+.ca-actions button {
+  flex: 1; padding: .7rem; border-radius: 100px; cursor: pointer;
+  font-family: 'Lato', sans-serif; font-size: .64rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+  transition: transform .2s, opacity .2s;
+}
+#ca-cancel { background: rgba(212,180,131,.08); border: 1px solid rgba(212,180,131,.3); color: var(--gold-bright); }
+#ca-create { background: linear-gradient(180deg, rgba(212,180,131,.95), rgba(184,150,100,.95)); border: none; color: #1a140c; }
+#ca-create:hover { transform: translateY(-2px); }
+#ca-create:disabled { opacity: .5; }
+.ca-msg { margin-top: .7rem; min-height: 1em; font-family: 'Lato', sans-serif; font-size: .62rem; letter-spacing: .1em; color: var(--gold-bright); }
+
 #overview {
   position: fixed; inset: 0; z-index: 80;
   background: rgba(6,6,6,.97);
@@ -1047,6 +1099,11 @@ html, body {
         <div class="card-title">Mini Jeu</div>
         <div class="card-desc">Caméscope volant · bats le record du clan</div>
       </div>
+      <div class="card card-create" id="card-create">
+        <div class="card-icon">➕</div>
+        <div class="card-title">Créer ton album</div>
+        <div class="card-desc">Ton propre album, visible par tous</div>
+      </div>
     </div>
   </div>
 </div>
@@ -1056,6 +1113,7 @@ html, body {
   <div id="grain"></div>
   <div id="vignette"></div>
   <div id="slideshow"></div>
+  <div id="album-title"></div>
 
   <div id="ui">
     <div id="progress"></div>
@@ -1198,6 +1256,21 @@ html, body {
   </div>
 </div>
 
+<!-- ══════════ CRÉER UN ALBUM ══════════ -->
+<div id="create-album">
+  <div class="ca-box">
+    <div class="ca-title">Créer ton album</div>
+    <div class="ca-sub">Donne-lui un nom, puis ajoute tes photos &amp; vidéos.</div>
+    <input id="ca-name" type="text" placeholder="nom de l'album" maxlength="40" autocomplete="off">
+    <input id="ca-desc" type="text" placeholder="description (optionnel)" maxlength="80" autocomplete="off">
+    <div class="ca-actions">
+      <button id="ca-cancel" type="button">Annuler</button>
+      <button id="ca-create" type="button">Créer</button>
+    </div>
+    <div id="ca-msg" class="ca-msg"></div>
+  </div>
+</div>
+
 <!-- ══════════ BOUTON CLASH OF CLANS (global) ══════════ -->
 <a id="coc-btn" href="https://link.clashofclans.com/fr?action=OpenClanProfile&tag=2RU2Q8008"
    target="_blank" rel="noopener noreferrer">
@@ -1335,23 +1408,33 @@ function buildMediaList(images, videos) {
   }
   return media;
 }
-const MEDIA = buildMediaList(IMAGES, VIDEOS);
+let MEDIA = buildMediaList(IMAGES, VIDEOS);
 
 /* Clip Farm : collection séparée (uploads visiteurs uniquement), table Supabase à part. */
 const CLIP_MEDIA = [];
 
-/* Descripteur de zone d'upload : quelle table Supabase, quel bouton, comment
-   afficher le nouvel ajout. Permet à un seul pipeline de servir Album ET Clip Farm. */
-const ZONE = {
-  album: {
-    table: SUPABASE.table, btn: 'upload-btn', label: 'Ajoute la tienne',
-    add(item) { MEDIA.push(item); appendSlide(MEDIA.length - 1, item); },
-  },
-  clip: {
-    table: 'clip_uploads', btn: 'clip-upload-btn', label: 'Ajoute ton clip',
-    add(item) { CLIP_MEDIA.push(item); clipAddCell(CLIP_MEDIA.length - 1, item); },
-  },
-};
+/* ── Albums créés par les visiteurs (en plus de l'album principal) ──
+   MEDIA pointe TOUJOURS sur l'album actuellement affiché. albumStore garde
+   chaque album en mémoire (clé 'main' = album principal, sinon l'id de l'album)
+   → on peut basculer d'un album à l'autre sans tout recharger. */
+const albumStore = {};       // { main: [...], <id>: [...] }
+let currentAlbumKey = 'main';
+let createdAlbums = [];      // métadonnées des albums créés (nom, description, id)
+
+function addToCurrentAlbum(item) { MEDIA.push(item); appendSlide(MEDIA.length - 1, item); }
+
+/* Cible d'upload selon la zone ET l'album courant : table Supabase + champs + bouton + affichage.
+   Un seul pipeline sert l'album principal, la Clip Farm ET les albums créés. */
+function zoneTarget(zoneKey) {
+  if (zoneKey === 'clip') {
+    return { table: 'clip_uploads', extra: null, btn: 'clip-upload-btn', label: 'Ajoute ton clip',
+             add: it => { CLIP_MEDIA.push(it); clipAddCell(CLIP_MEDIA.length - 1, it); } };
+  }
+  const main = currentAlbumKey === 'main';
+  return { table: main ? SUPABASE.table : 'album_media',
+           extra: main ? null : { album_id: currentAlbumKey },
+           btn: 'upload-btn', label: 'Ajoute la tienne', add: addToCurrentAlbum };
+}
 
 /* Mélange Fisher-Yates — ordre aléatoire à chaque visite */
 function shuffle(arr) {
@@ -1445,6 +1528,7 @@ function createSlideEl(item, i) {
 
 function buildSlides() {
   const ss = $('slideshow');
+  ss.innerHTML = '';   // vide l'ancien album (reconstruction lors d'un changement d'album)
   MEDIA.forEach((item, i) => ss.appendChild(createSlideEl(item, i)));
 
   // Affiche la 1re slide (sans démarrer les timers) + précharge quelques images
@@ -1751,7 +1835,7 @@ function resumeMusicIfOn() { if (musicOn && audio.paused && !document.hidden) au
    Tri par id (clé auto-incrémentée) = ordre d'ajout exact, même en cas d'envoi
    multiple (où created_at pourrait être identique et brouiller l'ordre). */
 async function fetchUploads(zone) {
-  const table = (ZONE[zone] || ZONE.album).table;
+  const table = zone === 'clip' ? 'clip_uploads' : SUPABASE.table;
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 4000);
@@ -1781,7 +1865,7 @@ function resetUploadSoon(btnId = 'upload-btn', label = 'Ajoute la tienne') {
 }
 
 /* Enregistre l'adresse Cloudinary dans la table Supabase */
-async function saveUploadRecord(type, url, table) {
+async function saveUploadRecord(type, url, table, extra) {
   const res = await fetch(`${SUPABASE.url}/rest/v1/${table}`, {
     method: 'POST',
     headers: {
@@ -1790,7 +1874,7 @@ async function saveUploadRecord(type, url, table) {
       'Content-Type': 'application/json',
       Prefer: 'return=minimal',
     },
-    body: JSON.stringify({ type, url, caption: '' }),
+    body: JSON.stringify({ type, url, caption: '', ...(extra || {}) }),
   });
   if (!res.ok) throw new Error('supabase insert failed');
 }
@@ -1800,7 +1884,7 @@ async function saveUploadRecord(type, url, table) {
 function uploadOne(file, onProgress, zoneKey = 'album') {
   return new Promise(resolve => {
     if (file.size > 100 * 1024 * 1024) { resolve({ ok: false, reason: 'size' }); return; }
-    const z = ZONE[zoneKey] || ZONE.album;
+    const z = zoneTarget(zoneKey);
 
     const form = new FormData();
     form.append('file', file);
@@ -1826,7 +1910,7 @@ function uploadOne(file, onProgress, zoneKey = 'album') {
       if (type === 'video') url = url.replace(/\.\w+($|\?)/i, '.mp4'); // mp4 universel
       else url = url.replace('/upload/', '/upload/f_auto,q_auto/');     // image optimisée
       try {
-        await saveUploadRecord(type, url, z.table);
+        await saveUploadRecord(type, url, z.table, z.extra);
         z.add({ type, src: url, caption: '' });
         resolve({ ok: true });
       } catch (e) {
@@ -1841,7 +1925,7 @@ function uploadOne(file, onProgress, zoneKey = 'album') {
 
 /* Envoie PLUSIEURS fichiers à la suite, avec progression globale. */
 async function handleFiles(fileList, zoneKey = 'album') {
-  const z = ZONE[zoneKey] || ZONE.album;
+  const z = zoneTarget(zoneKey);
   const files = Array.from(fileList || []);
   if (!files.length || $(z.btn).classList.contains('busy')) return;
 
@@ -2100,11 +2184,115 @@ function showScreen(name) {
 function enterAlbum() {
   startMusicOnce();
   resumeMusicIfOn();   // si on arrive depuis la Clip Farm (musique coupée), elle reprend
+  switchAlbumView('main', '');   // revient à l'album principal (reconstruit si on venait d'un autre)
   showScreen('album');
   albumRunning = true;
   paused = false; updatePauseBtn();
   resetIdle(); showNav();
   activate(idx, false, 'next');
+}
+
+/* ─────────────────────── ALBUMS CRÉÉS PAR LES VISITEURS ─────────────────────── */
+
+/* Bascule le diaporama vers l'album `key` ('main' ou un id). Reconstruit les slides
+   uniquement si on change réellement d'album (l'album principal reste intact sinon). */
+function switchAlbumView(key, name) {
+  if (key !== currentAlbumKey) {
+    const oldV = document.querySelector('.slide.active video.slide-media');
+    if (oldV) cleanupVideo(oldV);
+    clearTimeout(autoTimer);
+    MEDIA = albumStore[key] || [];
+    currentAlbumKey = key;
+    idx = 0;
+    buildSlides();
+  }
+  setAlbumTitle(key === 'main' ? '' : (name || ''));
+}
+function setAlbumTitle(name) {
+  const el = $('album-title');
+  if (!el) return;
+  if (!name) { el.classList.remove('show'); el.textContent = ''; return; }
+  el.textContent = name;
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+}
+
+async function fetchAlbums() {
+  try {
+    const res = await fetch(`${SUPABASE.url}/rest/v1/albums?select=id,name,description&order=id.asc`,
+      { headers: { apikey: SUPABASE.anonKey, Authorization: `Bearer ${SUPABASE.anonKey}` } });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (e) { return []; }
+}
+async function fetchAlbumMedia(albumId) {
+  try {
+    const res = await fetch(`${SUPABASE.url}/rest/v1/album_media?album_id=eq.${albumId}&select=type,url,caption&order=id.asc`,
+      { headers: { apikey: SUPABASE.anonKey, Authorization: `Bearer ${SUPABASE.anonKey}` } });
+    if (!res.ok) return [];
+    const rows = await res.json();
+    return rows.map(r => ({ type: r.type, src: r.url, caption: r.caption || '' }));
+  } catch (e) { return []; }
+}
+async function loadAlbums() {
+  createdAlbums = await fetchAlbums();
+  renderAlbumCards();
+}
+function renderAlbumCards() {
+  document.querySelectorAll('.card.card-album-dyn').forEach(c => c.remove());
+  const createCard = $('card-create');
+  if (!createCard) return;
+  createdAlbums.forEach(al => {
+    const card = document.createElement('div');
+    card.className = 'card card-album-dyn';
+    const icon = document.createElement('div'); icon.className = 'card-icon'; icon.textContent = '📸';
+    const title = document.createElement('div'); title.className = 'card-title'; title.textContent = al.name;
+    const desc = document.createElement('div'); desc.className = 'card-desc'; desc.textContent = al.description || 'Album';
+    card.append(icon, title, desc);
+    card.addEventListener('click', () => enterCreatedAlbum(al));
+    createCard.parentNode.insertBefore(card, createCard);
+  });
+}
+async function enterCreatedAlbum(al) {
+  startMusicOnce(); resumeMusicIfOn();
+  if (!albumStore[al.id]) albumStore[al.id] = await fetchAlbumMedia(al.id);
+  switchAlbumView(al.id, al.name);
+  showScreen('album');
+  albumRunning = true;
+  paused = false; updatePauseBtn();
+  resetIdle(); showNav();
+  activate(idx, false, 'next');
+}
+
+/* ── Formulaire de création d'album ── */
+function openCreateAlbum() {
+  $('ca-name').value = ''; $('ca-desc').value = ''; $('ca-msg').textContent = '';
+  $('create-album').classList.add('on');
+  setTimeout(() => $('ca-name').focus(), 50);
+}
+function closeCreateAlbum() { $('create-album').classList.remove('on'); }
+async function doCreateAlbum() {
+  const name = $('ca-name').value.trim().slice(0, 40);
+  const desc = $('ca-desc').value.trim().slice(0, 80);
+  if (!name) { $('ca-msg').textContent = 'donne un nom à ton album'; return; }
+  $('ca-create').disabled = true; $('ca-msg').textContent = 'création…';
+  try {
+    const res = await fetch(`${SUPABASE.url}/rest/v1/albums`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE.anonKey, Authorization: `Bearer ${SUPABASE.anonKey}`,
+                 'Content-Type': 'application/json', Prefer: 'return=representation' },
+      body: JSON.stringify({ name, description: desc }),
+    });
+    if (!res.ok) throw new Error('insert');
+    const rows = await res.json();
+    const al = rows[0];
+    createdAlbums.push(al);
+    renderAlbumCards();
+    closeCreateAlbum();
+    enterCreatedAlbum(al);   // on entre direct dans le nouvel album (vide → on ajoute des photos)
+  } catch (e) {
+    $('ca-msg').textContent = 'échec — la table « albums » existe-t-elle ?';
+  }
+  $('ca-create').disabled = false;
 }
 function enterClip() {
   pauseAlbum();
@@ -2583,6 +2771,14 @@ function bindEvents() {
     else if (e.key === 'Escape') closeClipLight();
   });
 
+  // Créer ton album
+  $('card-create').addEventListener('click', openCreateAlbum);
+  $('ca-cancel').addEventListener('click', closeCreateAlbum);
+  $('ca-create').addEventListener('click', doCreateAlbum);
+  $('create-album').addEventListener('click', e => { if (e.target === $('create-album')) closeCreateAlbum(); });
+  $('ca-name').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('ca-desc').focus(); } });
+  $('ca-desc').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doCreateAlbum(); } });
+
   // Mini Jeu
   $('card-game').addEventListener('click', enterGame);
   $('back-game').addEventListener('click', goHome);
@@ -2644,9 +2840,11 @@ window.addEventListener('DOMContentLoaded', async () => {
   const userUploads = await fetchUploads('album');   // tes 69 + tout ce qui a été ajouté depuis
   MEDIA.push(...userUploads);
   if (CONFIG.shuffle) shuffle(MEDIA);             // ordre aléatoire à chaque visite
+  albumStore.main = MEDIA;                         // l'album principal sous la clé 'main'
   buildSlides();
   bindEvents();
   loadCommentCounts();                            // pastilles de commentaires (1 requête, non bloquant)
+  loadAlbums();                                   // cartes des albums créés par les visiteurs
 });
 </script>
 </body>
