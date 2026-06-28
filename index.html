@@ -106,10 +106,13 @@ html, body {
 ════════════════════════════════════════════════ */
 #home {
   background: radial-gradient(ellipse at 50% 35%, #16110a 0%, #070707 72%);
-  display: flex; align-items: center; justify-content: center;
+  display: flex; flex-direction: column; align-items: center;
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
   padding: calc(env(safe-area-inset-top,0px) + 1.2rem) 1.2rem
-           calc(env(safe-area-inset-bottom,0px) + 5.2rem);
+           calc(env(safe-area-inset-bottom,0px) + 6rem);
 }
+/* centre verticalement si ça tient, sinon laisse défiler sans rogner le haut */
+#home > .home-content { margin: auto 0; }
 
 /* — photos flottantes (compositeur uniquement = ultra léger) — */
 .home-bg { position: absolute; inset: 0; overflow: hidden; z-index: 0; pointer-events: none; }
@@ -598,6 +601,94 @@ html, body {
   text-align: center; display: none;
 }
 .cm-count.show { display: block; }
+
+/* ── Filtre « pellicule / argentique » (activable, sur les photos) ── */
+#film-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; flex-shrink: 0;
+  background: rgba(10,9,7,.6); border: 1px solid rgba(212,180,131,.3);
+  border-radius: 9px; cursor: pointer; pointer-events: auto;
+  transition: background .3s var(--ease-soft), border-color .3s var(--ease-soft), transform .25s;
+}
+#film-btn:hover { background: rgba(212,180,131,.14); border-color: var(--gold); }
+#film-btn:active { transform: scale(.9); }
+#film-btn svg { width: 18px; height: 18px; stroke: var(--gold-bright); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+#film-btn.on { border-color: var(--gold-bright); background: rgba(212,180,131,.2); }
+
+#film-overlay {
+  position: fixed; inset: 0; z-index: 12; pointer-events: none; opacity: 0;
+  transition: opacity .6s var(--ease-soft);
+  /* relève les noirs (fade argentique) + fuite de lumière chaude */
+  background:
+    radial-gradient(120% 75% at 82% 8%, rgba(255,200,128,.18), transparent 50%),
+    linear-gradient(rgba(78,60,40,.16), rgba(60,48,34,.14));
+  mix-blend-mode: screen;
+}
+#film-overlay::after {   /* fine teinte ambrée par-dessus, façon vieux tirage */
+  content: ''; position: absolute; inset: 0;
+  background: rgba(120,82,40,.10); mix-blend-mode: overlay;
+}
+#album-view.film img.slide-media {
+  filter: sepia(.34) saturate(.72) contrast(.95) brightness(1.09) hue-rotate(-7deg);
+}
+#album-view.film #film-overlay { opacity: 1; }
+#album-view.film #grain { opacity: .14; }
+#album-view.film #vignette {
+  background:
+    radial-gradient(ellipse at center, transparent 45%, rgba(40,28,14,.5) 100%),
+    linear-gradient(to bottom, rgba(0,0,0,.28) 0%, transparent 16%, transparent 74%, rgba(0,0,0,.42) 100%);
+}
+
+/* ── Stickers (emojis posés sur les photos, partagés par tous) ── */
+#sk-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; flex-shrink: 0;
+  background: rgba(10,9,7,.6); border: 1px solid rgba(212,180,131,.3);
+  border-radius: 9px; cursor: pointer; pointer-events: auto;
+  transition: background .3s var(--ease-soft), border-color .3s var(--ease-soft), transform .25s;
+}
+#sk-btn:hover { background: rgba(212,180,131,.14); border-color: var(--gold); }
+#sk-btn:active { transform: scale(.9); }
+#sk-btn svg { width: 18px; height: 18px; stroke: var(--gold-bright); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+#sk-btn.on { border-color: var(--gold-bright); background: rgba(212,180,131,.2); }
+
+#sticker-layer { position: fixed; inset: 0; z-index: 18; pointer-events: none; }
+body.sticker-mode #sticker-layer { pointer-events: auto; cursor: crosshair; }
+.sticker {
+  position: absolute; transform: translate(-50%, -50%);
+  font-size: clamp(2rem, 9vw, 3.2rem); line-height: 1; pointer-events: none; user-select: none;
+  filter: drop-shadow(0 3px 8px rgba(0,0,0,.55)); animation: skPop .3s var(--ease-soft) both;
+}
+@keyframes skPop { from { opacity: 0; transform: translate(-50%,-50%) scale(0); } to { opacity: 1; transform: translate(-50%,-50%) scale(1); } }
+body.sticker-mode #sticker-layer::before {
+  content: 'choisis un emoji puis touche la photo'; position: absolute; top: 15%; left: 50%; transform: translateX(-50%);
+  font-family: 'Lato', sans-serif; font-size: .56rem; letter-spacing: .18em; text-transform: uppercase;
+  color: rgba(248,236,220,.75); background: rgba(8,6,4,.55); padding: .4rem .85rem; border-radius: 100px; white-space: nowrap;
+}
+
+#sticker-bar {
+  position: fixed; left: 0; right: 0; z-index: 76;
+  bottom: 0; display: none; align-items: center; gap: .5rem;
+  padding: .6rem .8rem calc(env(safe-area-inset-bottom,0px) + .6rem);
+  background: linear-gradient(to top, rgba(8,6,4,.97), rgba(8,6,4,.86));
+  border-top: 1px solid rgba(212,180,131,.2);
+}
+body.sticker-mode #sticker-bar { display: flex; }
+body.sticker-mode #coc-btn { opacity: 0; pointer-events: none; }   /* pas de Clash par-dessus la palette */
+.sk-emojis { flex: 1; display: flex; gap: .25rem; overflow-x: auto; -webkit-overflow-scrolling: touch; padding: .15rem; scrollbar-width: none; }
+.sk-emojis::-webkit-scrollbar { display: none; }
+.sk-emoji {
+  flex-shrink: 0; width: 44px; height: 44px; border-radius: 10px; border: 1px solid transparent;
+  background: rgba(212,180,131,.06); font-size: 1.5rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: background .2s, border-color .2s, transform .15s;
+}
+.sk-emoji:active { transform: scale(.86); }
+.sk-emoji.sel { border-color: var(--gold-bright); background: rgba(212,180,131,.24); }
+#sk-done {
+  flex-shrink: 0; padding: .65rem 1.1rem; border-radius: 100px; border: none; cursor: pointer;
+  background: var(--gold-bright); color: #1a140c;
+  font-family: 'Lato', sans-serif; font-size: .62rem; font-weight: 700; letter-spacing: .15em; text-transform: uppercase;
+}
 
 /* Feuille de commentaires (monte du bas) */
 #comments {
@@ -1122,8 +1213,14 @@ html, body {
 <div id="album-view">
   <div id="grain"></div>
   <div id="vignette"></div>
+  <div id="film-overlay"></div>
   <div id="slideshow"></div>
   <div id="album-title"></div>
+  <div id="sticker-layer"></div>
+  <div id="sticker-bar">
+    <div class="sk-emojis" id="sk-emojis"></div>
+    <button id="sk-done" type="button">OK</button>
+  </div>
 
   <div id="ui">
     <div id="progress"></div>
@@ -1153,6 +1250,12 @@ html, body {
         <button id="cm-btn" aria-label="Commentaires" title="Commentaires">
           <svg viewBox="0 0 24 24" fill="none"><path d="M20 11.4a7.6 7.6 0 0 1-10.9 6.8L4.5 19.5l1.4-4.4A7.6 7.6 0 1 1 20 11.4z"/></svg>
           <span class="cm-count" id="cm-count"></span>
+        </button>
+        <button id="film-btn" aria-label="Filtre pellicule" title="Filtre pellicule (argentique)">
+          <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="M3 9.2h3M3 14.8h3M18 9.2h3M18 14.8h3M8 4.5v15M16 4.5v15"/></svg>
+        </button>
+        <button id="sk-btn" aria-label="Stickers" title="Coller des stickers">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M13.5 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-5.5"/><path d="M13.5 3v5.5a2 2 0 0 0 2 2H21z"/><circle cx="9" cy="11" r="1"/><circle cx="13" cy="11" r="1"/><path d="M8.5 14.5s1 1.5 2.5 1.5 2.5-1.5 2.5-1.5"/></svg>
         </button>
         <div id="counter"></div>
       </div>
@@ -1298,7 +1401,7 @@ html, body {
 ════════════════════════════════════════════════════════════════ */
 const CONFIG = {
   slideDuration: 7,   // durée d'une PHOTO (secondes)
-  videoCap: 15,       // plafond de lecture d'une VIDÉO (secondes)
+  videoCap: 90,       // repli si la durée d'une vidéo est inconnue (sinon = durée réelle)
   autoPlay: true,
   shuffle: true,      // ordre aléatoire à chaque ouverture du site
 };
@@ -1634,7 +1737,7 @@ function playActiveVideo(v, item, i) {
   let advanced = false;
   const advance = () => {
     if (advanced || v._dead) return;
-    if (paused || commentsOpen) return;   // pause manuelle ou panneau commentaires ouvert
+    if (paused || commentsOpen || stickerMode) return;   // pause / commentaires / stickers
     advanced = true;
     cleanupVideo(v);
     if (albumRunning) goTo(i + 1, 'next');
@@ -1652,9 +1755,13 @@ function playActiveVideo(v, item, i) {
     v._playingFired = true;
     clearTimeout(v._loadGuard);
     clearTimeout(v._capT);
-    v._capT = setTimeout(advance, cap);
-    const dur = isFinite(v.duration) && v.duration > 0 ? Math.min(v.duration, cap / 1000) : cap / 1000;
-    startProgress(dur);
+    // Joue la vidéo EN ENTIER : le plafond suit la VRAIE durée (+2 s de marge),
+    // au lieu de la couper à 15 s. `item.maxPlay` peut imposer une limite ;
+    // sinon repli sur CONFIG.videoCap uniquement si la durée est inconnue.
+    const realDur = (isFinite(v.duration) && v.duration > 0) ? v.duration : CONFIG.videoCap;
+    const playFor = item.maxPlay ? Math.min(item.maxPlay, realDur) : realDur;
+    v._capT = setTimeout(advance, (playFor + 2) * 1000);
+    startProgress(playFor);
   };
   v.addEventListener('ended', v._onEnded);
   v.addEventListener('playing', v._onPlaying, { once: true });
@@ -1726,6 +1833,7 @@ function activate(i, silent, dir = 'next') {
 
   updateCounter(i);
   updateCommentBadge(i);
+  renderStickers(i);
 
   // Légende
   const capEl = $('caption');
@@ -1749,7 +1857,7 @@ function activate(i, silent, dir = 'next') {
 }
 
 function goTo(i, dir) {
-  if (!albumRunning || commentsOpen) return;   // pas de changement de photo pendant qu'on commente
+  if (!albumRunning || commentsOpen || stickerMode) return;   // pas de changement pendant commentaire/stickers
   const n = MEDIA.length;
   const newIdx = ((i % n) + n) % n;
   if (!dir) {
@@ -1763,7 +1871,7 @@ function goTo(i, dir) {
 
 function scheduleNext() {
   clearTimeout(autoTimer);
-  if (!albumRunning || !CONFIG.autoPlay || paused || commentsOpen) return;
+  if (!albumRunning || !CONFIG.autoPlay || paused || commentsOpen || stickerMode) return;
   if (MEDIA[idx].type === 'video') return;   // la vidéo gère sa propre avance
   autoTimer = setTimeout(() => goTo(idx + 1, 'next'), CONFIG.slideDuration * 1000);
 }
@@ -1803,6 +1911,20 @@ function togglePause() {
     if (MEDIA[idx].type === 'video') { if (v) v.play().catch(() => {}); }
     else { startProgress(CONFIG.slideDuration); scheduleNext(); }
   }
+}
+
+/* Filtre pellicule (mémorisé sur l'appareil) */
+let filmOn = false;
+function toggleFilm() {
+  filmOn = !filmOn;
+  $('album-view').classList.toggle('film', filmOn);
+  $('film-btn').classList.toggle('on', filmOn);
+  try { localStorage.setItem('film_on', filmOn ? '1' : ''); } catch (e) {}
+}
+function applyFilmPref() {
+  try { filmOn = !!localStorage.getItem('film_on'); } catch (e) { filmOn = false; }
+  $('album-view').classList.toggle('film', filmOn);
+  $('film-btn').classList.toggle('on', filmOn);
 }
 
 /* ─────────────────────── MUSIQUE ─────────────────────── */
@@ -2198,6 +2320,87 @@ async function postComment() {
     $('cm-text').placeholder = 'échec — réessaie';
   }
   $('cm-send').disabled = false;
+}
+
+/* ─────────────────────── STICKERS (emojis posés sur les photos, partagés) ─────────────────────── */
+const STICKERS_TABLE = 'stickers';
+const STICKER_EMOJIS = ['😂','❤️','🔥','💀','😍','🤡','👑','🥵','🎉','✨','👀','💪','🙌','😎','🤩','💩','🐐','🤌','😭','🥶','🙏','💅'];
+let stickerStore = {};      // { media_key: [{emoji,x,y}] }
+let stickerMode = false, stickerSel = null;
+
+async function loadStickers() {
+  try {
+    const res = await fetch(`${SUPABASE.url}/rest/v1/${STICKERS_TABLE}?select=media_key,emoji,x,y`,
+      { headers: { apikey: SUPABASE.anonKey, Authorization: `Bearer ${SUPABASE.anonKey}` } });
+    if (!res.ok) return;
+    const rows = await res.json();
+    const map = {};
+    for (const r of rows) (map[r.media_key] = map[r.media_key] || []).push({ emoji: r.emoji, x: r.x, y: r.y });
+    stickerStore = map;
+    renderStickers(idx);
+  } catch (e) {}
+}
+function stickerEl(s) {
+  const el = document.createElement('span');
+  el.className = 'sticker'; el.textContent = s.emoji;
+  el.style.left = (s.x * 100) + '%'; el.style.top = (s.y * 100) + '%';
+  return el;
+}
+function renderStickers(i = idx) {
+  const layer = $('sticker-layer');
+  if (!layer) return;
+  layer.innerHTML = '';
+  (stickerStore[mediaKey(MEDIA[i])] || []).forEach(s => layer.appendChild(stickerEl(s)));
+}
+function buildStickerPalette() {
+  const box = $('sk-emojis');
+  box.innerHTML = '';
+  STICKER_EMOJIS.forEach(em => {
+    const b = document.createElement('button');
+    b.className = 'sk-emoji'; b.type = 'button'; b.textContent = em;
+    b.addEventListener('click', () => {
+      box.querySelectorAll('.sk-emoji.sel').forEach(x => x.classList.remove('sel'));
+      b.classList.add('sel'); stickerSel = em;
+    });
+    box.appendChild(b);
+  });
+}
+function toggleStickerMode() {
+  if (!albumRunning) return;
+  stickerMode = !stickerMode;
+  document.body.classList.toggle('sticker-mode', stickerMode);
+  $('sk-btn').classList.toggle('on', stickerMode);
+  if (stickerMode) {
+    clearTimeout(autoTimer);
+    const v = document.querySelector('.slide.active video.slide-media');
+    if (v) { clearTimeout(v._capT); clearTimeout(v._loadGuard); v.pause(); }
+    if (!$('sk-emojis').children.length) buildStickerPalette();
+  } else {
+    stickerSel = null;
+    $('sk-emojis').querySelectorAll('.sk-emoji.sel').forEach(x => x.classList.remove('sel'));
+    if (!paused && albumRunning) {
+      if (MEDIA[idx].type === 'video') { const v = document.querySelector('.slide.active video.slide-media'); if (v) v.play().catch(() => {}); }
+      else scheduleNext();
+    }
+  }
+}
+function placeSticker(clientX, clientY) {
+  if (!stickerSel) return;
+  const x = clientX / window.innerWidth, y = clientY / window.innerHeight;
+  const key = mediaKey(MEDIA[idx]);
+  const s = { emoji: stickerSel, x, y };
+  (stickerStore[key] = stickerStore[key] || []).push(s);
+  $('sticker-layer').appendChild(stickerEl(s));
+  saveSticker(key, stickerSel, x, y);
+}
+async function saveSticker(media_key, emoji, x, y) {
+  try {
+    await fetch(`${SUPABASE.url}/rest/v1/${STICKERS_TABLE}`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE.anonKey, Authorization: `Bearer ${SUPABASE.anonKey}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({ media_key, emoji, x, y }),
+    });
+  } catch (e) {}
 }
 
 /* ─────────────────────── TÉLÉCHARGER LA PHOTO/VIDÉO COURANTE ───────────────────────
@@ -2870,6 +3073,11 @@ function bindEvents() {
 
   // Vue d'ensemble
   $('pause-btn').addEventListener('click', e => { e.stopPropagation(); togglePause(); resetIdle(); });
+  $('film-btn').addEventListener('click', e => { e.stopPropagation(); toggleFilm(); resetIdle(); });
+  applyFilmPref();
+  $('sk-btn').addEventListener('click', e => { e.stopPropagation(); toggleStickerMode(); resetIdle(); });
+  $('sk-done').addEventListener('click', e => { e.stopPropagation(); toggleStickerMode(); });
+  $('sticker-layer').addEventListener('pointerdown', e => { if (stickerMode) { e.preventDefault(); placeSticker(e.clientX, e.clientY); } });
   $('ov-btn').addEventListener('click', e => { e.stopPropagation(); openOverview(); });
   $('dl-btn').addEventListener('click', e => { e.stopPropagation(); downloadCurrent(); });
   $('cm-btn').addEventListener('click', e => { e.stopPropagation(); openComments(); });
@@ -2917,6 +3125,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   buildSlides();
   bindEvents();
   loadCommentCounts();                            // pastilles de commentaires (1 requête, non bloquant)
+  loadStickers();                                 // stickers posés sur les photos (1 requête, non bloquant)
   loadAlbums();                                   // cartes des albums créés par les visiteurs
   fetchTracks().then(t => { if (t.length) PLAYLIST.push(...t); });   // musiques ajoutées par les visiteurs
 });
