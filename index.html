@@ -467,6 +467,51 @@ html, body {
 .game-board-empty, .game-board-load { justify-content: center; color: rgba(248,236,220,.5) !important; font-style: italic; }
 .game-hidden { display: none !important; }
 
+/* Menu de sélection des jeux */
+.game-menu-list { display: flex; flex-direction: column; gap: .6rem; width: min(86vw, 360px); margin-top: .5rem; }
+.game-pick {
+  display: flex; align-items: center; gap: .9rem; text-align: left;
+  padding: .85rem 1rem; border-radius: 14px; cursor: pointer;
+  background: rgba(212,180,131,.07); border: 1px solid rgba(212,180,131,.3);
+  transition: background .2s, border-color .2s, transform .15s;
+}
+.game-pick:hover { background: rgba(212,180,131,.14); border-color: var(--gold-bright); }
+.game-pick:active { transform: scale(.98); }
+.game-pick .gp-emoji { font-size: 1.9rem; flex-shrink: 0; }
+.game-pick .gp-txt { display: flex; flex-direction: column; }
+.game-pick .gp-txt b { font-family: 'Lato', sans-serif; font-size: .8rem; letter-spacing: .04em; color: var(--cream); }
+.game-pick .gp-txt i { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: .95rem; color: rgba(248,236,220,.7); }
+.game-over-btns { display: flex; gap: .6rem; align-items: center; }
+
+/* HUD des mini-jeux (timer + score) */
+#mini-area { position: absolute; inset: 0; z-index: 6; }
+#mini-hud {
+  position: absolute; top: calc(env(safe-area-inset-top,0px) + 4.4rem); left: 0; right: 0; z-index: 7;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 clamp(1.2rem, 7vw, 2.6rem); pointer-events: none;
+  font-family: 'Playfair Display', serif; font-style: italic;
+}
+#mini-time { font-size: clamp(1.3rem, 5vw, 1.8rem); color: rgba(248,236,220,.7); }
+#mini-score { font-size: clamp(2rem, 8vw, 3rem); font-weight: 700; color: var(--gold-bright); text-shadow: 0 3px 18px rgba(0,0,0,.6); }
+
+/* Tape-vite */
+.mini-clicker { display: flex; align-items: center; justify-content: center; cursor: pointer; touch-action: manipulation; }
+.mini-clicker .mini-big {
+  font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700;
+  font-size: clamp(2.6rem, 12vw, 4.5rem); color: var(--cream); text-shadow: 0 4px 30px rgba(0,0,0,.7);
+  transition: transform .07s ease; user-select: none;
+}
+/* Réflexe : cibles */
+.mini-targets { touch-action: manipulation; }
+.mini-target {
+  position: absolute; transform: translate(-50%, -50%);
+  width: clamp(48px, 15vw, 70px); height: clamp(48px, 15vw, 70px); border-radius: 50%;
+  border: none; background: rgba(212,180,131,.14); cursor: pointer;
+  font-size: clamp(1.6rem, 6vw, 2.3rem); display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 18px rgba(0,0,0,.45); animation: targetIn .15s ease both;
+}
+@keyframes targetIn { from { transform: translate(-50%,-50%) scale(.3); opacity: 0; } to { transform: translate(-50%,-50%) scale(1); opacity: 1; } }
+
 /* ════════════════════════════════════════════════
    BOUTON RETOUR MENU
 ════════════════════════════════════════════════ */
@@ -535,7 +580,9 @@ html, body {
 /* ════════════════════════════════════════════════
    BOUTON + GRILLE VUE D'ENSEMBLE
 ════════════════════════════════════════════════ */
-.bottom-left { display: flex; align-items: center; gap: .65rem; }
+.bottom-left { display: flex; align-items: center; gap: .55rem; }
+.bottom-right { display: flex; flex-direction: column; align-items: flex-end; gap: .15rem; min-width: 0; }
+@media (max-width: 420px) { .bottom-left { gap: .42rem; } }
 #ov-btn {
   display: flex; align-items: center; justify-content: center;
   width: 34px; height: 34px; flex-shrink: 0;
@@ -711,16 +758,23 @@ body.ui-hidden #swipe-hint, body.ui-hidden #media-tag, body.ui-hidden #progress 
 #sk-btn svg { width: 18px; height: 18px; stroke: var(--gold-bright); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 #sk-btn.on { border-color: var(--gold-bright); background: rgba(212,180,131,.2); }
 
-#sticker-layer { position: fixed; inset: 0; z-index: 18; pointer-events: none; }
-body.sticker-mode #sticker-layer { pointer-events: auto; cursor: crosshair; }
-.sticker {
-  position: absolute; transform: translate(-50%, -50%);
-  font-size: clamp(2rem, 9vw, 3.2rem); line-height: 1; pointer-events: none; user-select: none;
-  filter: drop-shadow(0 3px 8px rgba(0,0,0,.55)); animation: skPop .3s var(--ease-soft) both;
+#sticker-layer { position: fixed; inset: 0; z-index: 18; pointer-events: none; overflow: hidden; }
+/* emoji qui monte en zigzag vers le haut puis disparaît (réaction « en direct ») */
+.float-react {
+  position: absolute; bottom: 15%; line-height: 1; pointer-events: none; user-select: none;
+  opacity: 0; will-change: transform, opacity;
+  filter: drop-shadow(0 3px 8px rgba(0,0,0,.5));
+  animation: floatUp 2.7s ease-in forwards;
 }
-@keyframes skPop { from { opacity: 0; transform: translate(-50%,-50%) scale(0); } to { opacity: 1; transform: translate(-50%,-50%) scale(1); } }
+@keyframes floatUp {
+  0%   { opacity: 0; transform: translate(-50%, 0) scale(.4); }
+  12%  { opacity: 1; transform: translate(calc(-50% + var(--w)), -10vh) scale(1); }
+  40%  { transform: translate(calc(-50% - var(--w)), -32vh); }
+  68%  { transform: translate(calc(-50% + var(--w)), -52vh); }
+  100% { opacity: 0; transform: translate(-50%, -76vh) scale(1.08); }
+}
 body.sticker-mode #sticker-layer::before {
-  content: 'choisis un emoji puis touche la photo'; position: absolute; top: 15%; left: 50%; transform: translateX(-50%);
+  content: 'tape un emoji pour réagir'; position: absolute; top: 14%; left: 50%; transform: translateX(-50%);
   font-family: 'Lato', sans-serif; font-size: .56rem; letter-spacing: .18em; text-transform: uppercase;
   color: rgba(248,236,220,.75); background: rgba(8,6,4,.55); padding: .4rem .85rem; border-radius: 100px; white-space: nowrap;
 }
@@ -1176,7 +1230,7 @@ body.sticker-mode #coc-btn { opacity: 0 !important; pointer-events: none; }   /*
 /* Inactivité — masque l'UI immersive (musique, flèches, légende) … */
 .idle #top, .idle .nav-btn, .idle #media-tag, .idle #caption { opacity: 0 !important; transition: opacity 1s var(--ease-soft); }
 /* … mais garde les ACTIONS (grille + télécharger + compteur) accessibles, juste atténuées. */
-.idle #bottom .bottom-left { opacity: .4; transition: opacity 1s var(--ease-soft); }
+.idle #bottom .bottom-left, .idle #bottom .bottom-right { opacity: .4; transition: opacity 1s var(--ease-soft); }
 #top, #bottom { transition: opacity .8s var(--ease-soft); }
 /* le bouton retour et Clash restent visibles, mais s'estompent un peu en idle */
 .idle .back-btn { opacity: .25; }
@@ -1321,12 +1375,14 @@ body.sticker-mode #coc-btn { opacity: 0 !important; pointer-events: none; }   /*
         <button id="film-btn" aria-label="Filtre pellicule" title="Filtre pellicule (argentique)">
           <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="M3 9.2h3M3 14.8h3M18 9.2h3M18 14.8h3M8 4.5v15M16 4.5v15"/></svg>
         </button>
-        <button id="sk-btn" aria-label="Stickers" title="Coller des stickers">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M13.5 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-5.5"/><path d="M13.5 3v5.5a2 2 0 0 0 2 2H21z"/><circle cx="9" cy="11" r="1"/><circle cx="13" cy="11" r="1"/><path d="M8.5 14.5s1 1.5 2.5 1.5 2.5-1.5 2.5-1.5"/></svg>
+        <button id="sk-btn" aria-label="Réactions" title="Réagir avec des emojis">
+          <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9"/><path d="M8.4 14.4s1.3 2 3.6 2 3.6-2 3.6-2"/><circle cx="9" cy="10" r="1.05"/><circle cx="15" cy="10" r="1.05"/></svg>
         </button>
+      </div>
+      <div class="bottom-right">
+        <div id="caption"></div>
         <div id="counter"></div>
       </div>
-      <div id="caption"></div>
     </div>
     <div id="media-tag"><span class="dot-rec"></span>Vidéo</div>
   </div>
@@ -1382,8 +1438,20 @@ body.sticker-mode #coc-btn { opacity: 0 !important; pointer-events: none; }   /*
     <svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg> Menu
   </button>
   <canvas id="game-canvas"></canvas>
+  <div id="mini-area"></div>
+  <div id="mini-hud" class="game-hidden"><div id="mini-time">10</div><div id="mini-score">0</div></div>
   <div id="game-score" class="game-hidden">0</div>
   <div id="game-hint" class="game-hidden">tape pour faire voler</div>
+
+  <!-- Menu de sélection des jeux -->
+  <div id="game-menu" class="game-panel game-hidden">
+    <div class="game-title">Choisis ton jeu</div>
+    <div class="game-menu-list">
+      <button class="game-pick" type="button" data-g="flappy"><span class="gp-emoji">📹</span><span class="gp-txt"><b>Caméscope volant</b><i>vole et esquive les obstacles</i></span></button>
+      <button class="game-pick" type="button" data-g="clicker"><span class="gp-emoji">👆</span><span class="gp-txt"><b>Tape-vite</b><i>un max de taps en 10 s</i></span></button>
+      <button class="game-pick" type="button" data-g="targets"><span class="gp-emoji">🎯</span><span class="gp-txt"><b>Réflexe</b><i>touche les cibles en 20 s</i></span></button>
+    </div>
+  </div>
 
   <!-- Pseudo -->
   <div id="game-login" class="game-panel">
@@ -1405,8 +1473,11 @@ body.sticker-mode #coc-btn { opacity: 0 !important; pointer-events: none; }   /*
     <div class="game-over-title">Perdu&nbsp;!</div>
     <div class="game-over-score">Score <b id="go-score">0</b></div>
     <div class="game-over-best">Ton record : <span id="go-best">0</span></div>
-    <button id="game-replay" class="game-btn">Rejouer</button>
-    <div class="game-board-title">Classement du clan</div>
+    <div class="game-over-btns">
+      <button id="game-back-menu" class="game-mini-btn" type="button">← Jeux</button>
+      <button id="game-replay" class="game-btn">Rejouer</button>
+    </div>
+    <div class="game-board-title" id="game-board-title">Classement du clan</div>
     <ol id="game-board" class="game-board"></ol>
   </div>
 </div>
@@ -2430,32 +2501,44 @@ async function postComment() {
 /* ─────────────────────── STICKERS (emojis posés sur les photos, partagés) ─────────────────────── */
 const STICKERS_TABLE = 'stickers';
 const STICKER_EMOJIS = ['😂','❤️','🔥','💀','😍','🤡','👑','🥵','🎉','✨','👀','💪','🙌','😎','🤩','💩','🐐','🤌','😭','🥶','🙏','💅'];
-let stickerStore = {};      // { media_key: [{emoji,x,y}] }
-let stickerMode = false, stickerSel = null;
+let reactStore = {};        // { media_key: [emoji, emoji, ...] } — une entrée par réaction posée
+let stickerMode = false;
 
 async function loadStickers() {
   try {
-    const res = await fetch(`${SUPABASE.url}/rest/v1/${STICKERS_TABLE}?select=media_key,emoji,x,y`,
+    const res = await fetch(`${SUPABASE.url}/rest/v1/${STICKERS_TABLE}?select=media_key,emoji`,
       { headers: { apikey: SUPABASE.anonKey, Authorization: `Bearer ${SUPABASE.anonKey}` } });
     if (!res.ok) return;
     const rows = await res.json();
     const map = {};
-    for (const r of rows) (map[r.media_key] = map[r.media_key] || []).push({ emoji: r.emoji, x: r.x, y: r.y });
-    stickerStore = map;
-    renderStickers(idx);
+    for (const r of rows) (map[r.media_key] = map[r.media_key] || []).push(r.emoji);
+    reactStore = map;
   } catch (e) {}
 }
-function stickerEl(s) {
-  const el = document.createElement('span');
-  el.className = 'sticker'; el.textContent = s.emoji;
-  el.style.left = (s.x * 100) + '%'; el.style.top = (s.y * 100) + '%';
-  return el;
+/* Efface les emojis flottants en cours (utile au changement de photo) */
+function renderStickers() {
+  const layer = $('sticker-layer');
+  if (layer) layer.innerHTML = '';
 }
-function renderStickers(i = idx) {
+/* Fait monter un emoji en zigzag vers le haut, puis disparaître */
+function spawnFloat(emoji, delay) {
   const layer = $('sticker-layer');
   if (!layer) return;
-  layer.innerHTML = '';
-  (stickerStore[mediaKey(MEDIA[i])] || []).forEach(s => layer.appendChild(stickerEl(s)));
+  const el = document.createElement('span');
+  el.className = 'float-react'; el.textContent = emoji;
+  el.style.left = (26 + Math.random() * 48) + '%';
+  el.style.setProperty('--w', ((Math.random() < 0.5 ? -1 : 1) * (14 + Math.random() * 20)) + 'px');
+  el.style.fontSize = (2.1 + Math.random() * 1.1) + 'rem';
+  el.style.animationDelay = (delay || 0) + 'ms';
+  layer.appendChild(el);
+  el.addEventListener('animationend', () => el.remove());
+}
+/* Rejoue toutes les réactions de la photo (autant d'emojis qui montent que ce qui a été mis) */
+function floatReactions(key) {
+  const list = reactStore[key] || [];
+  const max = 28;
+  const toShow = list.length > max ? list.slice(-max) : list;
+  toShow.forEach((emoji, i) => spawnFloat(emoji, i * 150));
 }
 function buildStickerPalette() {
   const box = $('sk-emojis');
@@ -2463,10 +2546,7 @@ function buildStickerPalette() {
   STICKER_EMOJIS.forEach(em => {
     const b = document.createElement('button');
     b.className = 'sk-emoji'; b.type = 'button'; b.textContent = em;
-    b.addEventListener('click', () => {
-      box.querySelectorAll('.sk-emoji.sel').forEach(x => x.classList.remove('sel'));
-      b.classList.add('sel'); stickerSel = em;
-    });
+    b.addEventListener('click', () => addReaction(em));
     box.appendChild(b);
   });
 }
@@ -2480,30 +2560,25 @@ function toggleStickerMode() {
     const v = document.querySelector('.slide.active video.slide-media');
     if (v) { clearTimeout(v._capT); clearTimeout(v._loadGuard); v.pause(); }
     if (!$('sk-emojis').children.length) buildStickerPalette();
-  } else {
-    stickerSel = null;
-    $('sk-emojis').querySelectorAll('.sk-emoji.sel').forEach(x => x.classList.remove('sel'));
-    if (!paused && albumRunning) {
-      if (MEDIA[idx].type === 'video') { const v = document.querySelector('.slide.active video.slide-media'); if (v) v.play().catch(() => {}); }
-      else scheduleNext();
-    }
+    floatReactions(mediaKey(MEDIA[idx]));   // rejoue les réactions déjà posées
+  } else if (!paused && albumRunning) {
+    if (MEDIA[idx].type === 'video') { const v = document.querySelector('.slide.active video.slide-media'); if (v) v.play().catch(() => {}); }
+    else scheduleNext();
   }
 }
-function placeSticker(clientX, clientY) {
-  if (!stickerSel) return;
-  const x = clientX / window.innerWidth, y = clientY / window.innerHeight;
+/* Réagir : l'emoji monte tout de suite + on l'enregistre (les autres le verront en revenant) */
+function addReaction(emoji) {
   const key = mediaKey(MEDIA[idx]);
-  const s = { emoji: stickerSel, x, y };
-  (stickerStore[key] = stickerStore[key] || []).push(s);
-  $('sticker-layer').appendChild(stickerEl(s));
-  saveSticker(key, stickerSel, x, y);
+  (reactStore[key] = reactStore[key] || []).push(emoji);
+  spawnFloat(emoji, 0);
+  saveReaction(key, emoji);
 }
-async function saveSticker(media_key, emoji, x, y) {
+async function saveReaction(media_key, emoji) {
   try {
     await fetch(`${SUPABASE.url}/rest/v1/${STICKERS_TABLE}`, {
       method: 'POST',
       headers: { apikey: SUPABASE.anonKey, Authorization: `Bearer ${SUPABASE.anonKey}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-      body: JSON.stringify({ media_key, emoji, x, y }),
+      body: JSON.stringify({ media_key, emoji, x: 0, y: 0 }),
     });
   } catch (e) {}
 }
@@ -2886,6 +2961,7 @@ function gameReset() {
   $('game-score').textContent = '0';
 }
 function gameFlap() {
+  if (currentGame !== 'flappy') return;   // ne touche pas aux autres jeux
   if (gState === 'ready') { gameRun(); return; }
   if (gState !== 'playing') return;
   gBird.v = -gH * GAME.flap;
@@ -2963,62 +3039,88 @@ function gameDraw() {
     gctx.fillText(GAME.emoji, 0, 0); gctx.restore();
   }
 }
-function gameOver() {
-  if (gState !== 'playing') return;
+let currentGame = 'flappy';
+
+function showGameMenu() {
+  stopMini(); cancelAnimationFrame(gRAF);
+  ['game-login','game-over','game-score','game-hint','mini-hud'].forEach(id => $(id).classList.add('game-hidden'));
+  $('game-canvas').style.display = 'none';
+  gState = 'menu';
+  $('game-menu').classList.remove('game-hidden');
+}
+async function startGame(key) {
+  currentGame = key;
+  $('game-menu').classList.add('game-hidden');
+  $('game-over').classList.add('game-hidden');
+  gBest = await fetchBest(gPseudo, key);
+  if (key === 'flappy') {
+    stopMini();
+    $('game-canvas').style.display = '';
+    gameReset(); gState = 'ready';
+    $('game-hint').textContent = gBest ? `record : ${gBest} · tape pour voler` : 'tape pour faire voler';
+    $('game-hint').classList.remove('game-hidden');
+    gameDraw();
+  } else if (key === 'clicker') { startClicker(); }
+  else if (key === 'targets') { startTargets(); }
+}
+
+/* écran de fin générique, partagé par tous les jeux */
+function showOver(score) {
   gState = 'over';
-  cancelAnimationFrame(gRAF);
-  $('go-score').textContent = gScore;
-  if (gScore > gBest) { gBest = gScore; saveScore(gPseudo, gBest); }
+  $('go-score').textContent = score;
+  if (score > gBest) { gBest = score; saveBest(gPseudo, currentGame, gBest); }
   $('go-best').textContent = gBest;
   $('game-score').classList.add('game-hidden');
+  $('mini-hud').classList.add('game-hidden');
   $('game-over').classList.remove('game-hidden');
-  loadBoard();
+  loadBoardFor(currentGame);
+}
+function gameOver() {                 // fin du flappy (caméscope volant)
+  if (gState !== 'playing') return;
+  cancelAnimationFrame(gRAF);
+  showOver(gScore);
 }
 function gameReplay() {
   $('game-over').classList.add('game-hidden');
-  gameReset(); gState = 'ready';
-  $('game-hint').textContent = gBest ? `record : ${gBest} · tape pour voler` : 'tape pour faire voler';
-  $('game-hint').classList.remove('game-hidden');
-  gameDraw();
+  startGame(currentGame);
 }
 async function gameDoLogin() {
   const p = $('game-pseudo').value.trim().replace(/\s+/g, ' ').slice(0, 18);
   if (!p) { $('game-login-msg').textContent = 'écris un pseudo'; return; }
   gPseudo = p;
-  $('game-login-msg').textContent = 'chargement…';
-  gBest = await fetchScore(p);
-  $('game-login').classList.add('game-hidden');
-  gameReset(); gState = 'ready';
-  $('game-hint').textContent = gBest ? `record : ${gBest} · tape pour voler` : 'tape pour faire voler';
-  $('game-hint').classList.remove('game-hidden');
-  gameDraw();
+  showGameMenu();
 }
 
-/* ── Scores (Supabase) ── */
-async function fetchScore(pseudo) {
+/* ── Classements : flappy = table `scores` ; autres jeux = `game_scores` (colonne game) ── */
+function _scoreTable(game) { return game === 'flappy' ? SCORES_TABLE : 'game_scores'; }
+async function fetchBest(pseudo, game) {
   try {
-    const res = await fetch(`${SUPABASE.url}/rest/v1/${SCORES_TABLE}?pseudo=eq.${encodeURIComponent(pseudo)}&select=score`,
+    const flt = game === 'flappy' ? '' : `&game=eq.${encodeURIComponent(game)}`;
+    const res = await fetch(`${SUPABASE.url}/rest/v1/${_scoreTable(game)}?pseudo=eq.${encodeURIComponent(pseudo)}${flt}&select=score`,
       { headers: { apikey: SUPABASE.anonKey, Authorization: `Bearer ${SUPABASE.anonKey}` } });
     if (!res.ok) return 0;
     const rows = await res.json();
     return rows.length ? (rows[0].score || 0) : 0;
   } catch (e) { return 0; }
 }
-async function saveScore(pseudo, score) {
+async function saveBest(pseudo, game, score) {
   try {
-    await fetch(`${SUPABASE.url}/rest/v1/${SCORES_TABLE}`, {
+    const body = game === 'flappy' ? { pseudo, score, updated_at: new Date().toISOString() }
+                                    : { pseudo, game, score, updated_at: new Date().toISOString() };
+    await fetch(`${SUPABASE.url}/rest/v1/${_scoreTable(game)}`, {
       method: 'POST',
       headers: { apikey: SUPABASE.anonKey, Authorization: `Bearer ${SUPABASE.anonKey}`,
                  'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' },
-      body: JSON.stringify({ pseudo, score, updated_at: new Date().toISOString() }),
+      body: JSON.stringify(body),
     });
   } catch (e) {}
 }
-async function loadBoard() {
+async function loadBoardFor(game) {
   const board = $('game-board');
   board.innerHTML = '<li class="game-board-load">…</li>';
   try {
-    const res = await fetch(`${SUPABASE.url}/rest/v1/${SCORES_TABLE}?select=pseudo,score&order=score.desc&limit=15`,
+    const flt = game === 'flappy' ? '' : `&game=eq.${encodeURIComponent(game)}`;
+    const res = await fetch(`${SUPABASE.url}/rest/v1/${_scoreTable(game)}?select=pseudo,score&order=score.desc&limit=15${flt}`,
       { headers: { apikey: SUPABASE.anonKey, Authorization: `Bearer ${SUPABASE.anonKey}` } });
     const rows = res.ok ? await res.json() : [];
     board.innerHTML = '';
@@ -3035,23 +3137,83 @@ async function loadBoard() {
   } catch (e) { board.innerHTML = '<li class="game-board-empty">classement indisponible</li>'; }
 }
 
+/* ════════ JEUX 2 & 3 (DOM, sans canvas) ════════ */
+let miniTimer = null, miniSpawn = null, miniScore = 0, miniEndAt = 0;
+function stopMini() {
+  clearInterval(miniTimer); clearInterval(miniSpawn); miniTimer = miniSpawn = null;
+  const a = $('mini-area'); if (a) { a.innerHTML = ''; a.onpointerdown = null; a.className = ''; }
+  $('mini-hud').classList.add('game-hidden');
+}
+function miniCountdown(onEnd) {
+  miniTimer = setInterval(() => {
+    const left = Math.max(0, miniEndAt - performance.now());
+    $('mini-time').textContent = (left / 1000).toFixed(1);
+    if (left <= 0) { clearInterval(miniTimer); clearInterval(miniSpawn); onEnd(); }
+  }, 100);
+}
+/* Tape-vite : un max de taps en 10 s */
+function startClicker() {
+  stopMini();
+  $('game-canvas').style.display = 'none';
+  miniScore = 0; $('mini-score').textContent = '0'; $('mini-time').textContent = '10.0';
+  $('mini-hud').classList.remove('game-hidden');
+  const area = $('mini-area');
+  area.className = 'mini-clicker';
+  area.innerHTML = '<div class="mini-big">TAPE&nbsp;!</div>';
+  area.onpointerdown = (e) => {
+    if (gState !== 'playing') return;
+    e.preventDefault(); miniScore++; $('mini-score').textContent = miniScore;
+    const b = area.querySelector('.mini-big'); if (b) { b.style.transform = 'scale(1.14)'; setTimeout(() => { if (b) b.style.transform = ''; }, 70); }
+  };
+  gState = 'playing';
+  miniEndAt = performance.now() + 10000;
+  miniCountdown(() => showOver(miniScore));
+}
+/* Réflexe : touche les cibles qui apparaissent, en 20 s */
+function startTargets() {
+  stopMini();
+  $('game-canvas').style.display = 'none';
+  miniScore = 0; $('mini-score').textContent = '0'; $('mini-time').textContent = '20.0';
+  $('mini-hud').classList.remove('game-hidden');
+  $('mini-area').className = 'mini-targets'; $('mini-area').innerHTML = '';
+  gState = 'playing';
+  miniEndAt = performance.now() + 20000;
+  spawnTarget();
+  miniSpawn = setInterval(spawnTarget, 780);
+  miniCountdown(() => showOver(miniScore));
+}
+function spawnTarget() {
+  const area = $('mini-area');
+  if (!area || gState !== 'playing') return;
+  const t = document.createElement('button');
+  t.className = 'mini-target'; t.type = 'button';
+  t.textContent = ['🎯','💥','⭐','🔴','🟢'][Math.floor(Math.random() * 5)];
+  t.style.left = (8 + Math.random() * 76) + '%';
+  t.style.top = (15 + Math.random() * 62) + '%';
+  t.onpointerdown = (e) => {
+    if (gState !== 'playing') return;
+    e.preventDefault(); e.stopPropagation();
+    miniScore++; $('mini-score').textContent = miniScore; t.remove();
+  };
+  area.appendChild(t);
+  setTimeout(() => t.remove(), 1050);
+}
+
 function enterGame() {
   pauseAlbum();
   startMusicOnce(); resumeMusicIfOn();
   showScreen('game');
   gameInit();
-  cancelAnimationFrame(gRAF);
+  stopMini(); cancelAnimationFrame(gRAF);
   $('game-over').classList.add('game-hidden');
   $('game-score').classList.add('game-hidden');
+  $('game-hint').classList.add('game-hidden');
   if (gPseudo) {
-    $('game-login').classList.add('game-hidden');
-    gameReset(); gState = 'ready';
-    $('game-hint').textContent = gBest ? `record : ${gBest} · tape pour voler` : 'tape pour faire voler';
-    $('game-hint').classList.remove('game-hidden');
-    gameDraw();
+    showGameMenu();           // déjà un pseudo → directement le menu des jeux
   } else {
+    $('game-menu').classList.add('game-hidden');
     $('game-login').classList.remove('game-hidden');
-    $('game-hint').classList.add('game-hidden');
+    $('game-canvas').style.display = 'none';
     gState = 'login';
   }
 }
@@ -3171,6 +3333,8 @@ function bindEvents() {
   $('game-photo-input').addEventListener('change', e => { onPhotoPicked(e.target.files[0]); e.target.value = ''; });
   $('game-photo-reset').addEventListener('click', clearGameChar);
   $('game-replay').addEventListener('click', gameReplay);
+  $('game-back-menu').addEventListener('click', showGameMenu);
+  document.querySelectorAll('.game-pick').forEach(b => b.addEventListener('click', () => startGame(b.dataset.g)));
   $('game-canvas').addEventListener('pointerdown', e => { e.preventDefault(); gameFlap(); });
   document.addEventListener('keydown', e => {
     if (!$('game').classList.contains('on') || gState === 'login') return;
@@ -3185,7 +3349,6 @@ function bindEvents() {
   $('ui-toggle').addEventListener('click', e => { e.stopPropagation(); toggleUI(); });
   $('sk-btn').addEventListener('click', e => { e.stopPropagation(); toggleStickerMode(); resetIdle(); });
   $('sk-done').addEventListener('click', e => { e.stopPropagation(); toggleStickerMode(); });
-  $('sticker-layer').addEventListener('pointerdown', e => { if (stickerMode) { e.preventDefault(); placeSticker(e.clientX, e.clientY); } });
   $('ov-btn').addEventListener('click', e => { e.stopPropagation(); openOverview(); });
   $('dl-btn').addEventListener('click', e => { e.stopPropagation(); downloadCurrent(); });
   $('cm-btn').addEventListener('click', e => { e.stopPropagation(); openComments(); });
