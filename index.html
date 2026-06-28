@@ -617,26 +617,85 @@ html, body {
 
 #film-overlay {
   position: fixed; inset: 0; z-index: 12; pointer-events: none; opacity: 0;
-  transition: opacity .6s var(--ease-soft);
-  /* relève les noirs (fade argentique) + fuite de lumière chaude */
-  background:
-    radial-gradient(120% 75% at 82% 8%, rgba(255,200,128,.18), transparent 50%),
-    linear-gradient(rgba(78,60,40,.16), rgba(60,48,34,.14));
-  mix-blend-mode: screen;
+  transition: opacity .5s var(--ease-soft); mix-blend-mode: screen;
 }
-#film-overlay::after {   /* fine teinte ambrée par-dessus, façon vieux tirage */
-  content: ''; position: absolute; inset: 0;
-  background: rgba(120,82,40,.10); mix-blend-mode: overlay;
+/* Base : dès qu'un filtre (≠ aucun) est actif → calque + grain visibles */
+#album-view.filtered #film-overlay { opacity: 1; }
+#album-view.filtered #grain { opacity: .12; }
+
+/* ── Les filtres (le bouton ouvre une bande de sélection en bas) ──
+   Appliqué à la photo NETTE + son fond flou d'un bloc (slide entière, hors vidéos)
+   → rendu cohérent (le fond suit la teinte du filtre). */
+#album-view .slide.active:not(.is-video),
+#album-view .slide.leaving:not(.is-video) { filter: var(--flt-grade, none); }
+
+#album-view.flt-argentique { --flt-grade: sepia(.34) saturate(.72) contrast(.95) brightness(1.09) hue-rotate(-7deg); }
+#album-view.flt-argentique #film-overlay { background: radial-gradient(120% 75% at 82% 8%, rgba(255,200,128,.18), transparent 50%), linear-gradient(rgba(78,60,40,.16), rgba(60,48,34,.14)); }
+
+#album-view.flt-bw { --flt-grade: grayscale(1) contrast(1.12) brightness(1.05); }
+#album-view.flt-bw #film-overlay { background: linear-gradient(rgba(22,22,26,.10), rgba(12,12,16,.16)); }
+
+#album-view.flt-polaroid { --flt-grade: sepia(.2) saturate(1.22) contrast(.9) brightness(1.13) hue-rotate(-4deg); }
+#album-view.flt-polaroid #film-overlay { background: radial-gradient(120% 90% at 50% 0%, rgba(255,242,205,.2), transparent 60%), linear-gradient(rgba(120,128,90,.10), rgba(90,82,60,.12)); }
+
+#album-view.flt-vhs { --flt-grade: saturate(1.55) contrast(1.1) brightness(1.02) hue-rotate(3deg); }
+#album-view.flt-vhs #film-overlay { background: linear-gradient(90deg, rgba(255,0,90,.07), transparent 7%, transparent 93%, rgba(0,190,255,.07)), repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 1px, transparent 1px 3px); }
+
+#album-view.flt-froid { --flt-grade: saturate(.88) contrast(1.06) brightness(1.03) hue-rotate(9deg); }
+#album-view.flt-froid #film-overlay { background: radial-gradient(120% 80% at 28% 12%, rgba(120,180,255,.15), transparent 55%), linear-gradient(rgba(40,62,92,.13), rgba(28,44,70,.13)); }
+
+#album-view.flt-dore { --flt-grade: sepia(.42) saturate(1.12) contrast(1.02) brightness(1.06) hue-rotate(-12deg); }
+#album-view.flt-dore #film-overlay { background: radial-gradient(130% 90% at 75% 12%, rgba(255,185,90,.26), transparent 55%), linear-gradient(rgba(110,70,20,.15), rgba(80,55,20,.12)); }
+
+#album-view.flt-creme { --flt-grade: sepia(.15) saturate(.9) contrast(.92) brightness(1.12); }
+#album-view.flt-creme #film-overlay { background: linear-gradient(rgba(255,238,210,.14), rgba(235,220,190,.12)); }
+
+#album-view.flt-drama { --flt-grade: grayscale(.32) contrast(1.3) saturate(.78) brightness(.97); }
+#album-view.flt-drama #film-overlay { background: linear-gradient(rgba(10,10,14,.12), rgba(6,6,10,.2)); }
+#album-view.flt-drama #vignette { background: radial-gradient(ellipse at center, transparent 24%, rgba(0,0,0,.85) 100%), linear-gradient(to bottom, rgba(0,0,0,.46) 0%, transparent 18%, transparent 64%, rgba(0,0,0,.64) 100%); }
+
+#filter-bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 76; display: none;
+  padding: .6rem .8rem calc(env(safe-area-inset-bottom,0px) + .6rem);
+  background: linear-gradient(to top, rgba(8,6,4,.97), rgba(8,6,4,.86));
+  border-top: 1px solid rgba(212,180,131,.2);
 }
-#album-view.film img.slide-media {
-  filter: sepia(.34) saturate(.72) contrast(.95) brightness(1.09) hue-rotate(-7deg);
+body.filter-open #filter-bar { display: block; }
+body.filter-open #coc-btn { opacity: 0 !important; pointer-events: none; }
+.flt-chips { display: flex; gap: .4rem; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.flt-chips::-webkit-scrollbar { display: none; }
+.flt-chip {
+  flex-shrink: 0; padding: .55rem .95rem; border-radius: 100px;
+  border: 1px solid rgba(212,180,131,.3); background: rgba(212,180,131,.06);
+  color: rgba(248,236,220,.82); font-family: 'Lato', sans-serif;
+  font-size: .62rem; letter-spacing: .08em; cursor: pointer; white-space: nowrap;
+  transition: background .2s, border-color .2s, color .2s;
 }
-#album-view.film #film-overlay { opacity: 1; }
-#album-view.film #grain { opacity: .14; }
-#album-view.film #vignette {
-  background:
-    radial-gradient(ellipse at center, transparent 45%, rgba(40,28,14,.5) 100%),
-    linear-gradient(to bottom, rgba(0,0,0,.28) 0%, transparent 16%, transparent 74%, rgba(0,0,0,.42) 100%);
+.flt-chip.on { background: var(--gold-bright); color: #1a140c; border-color: var(--gold-bright); font-weight: 700; }
+
+/* ── Cacher / réafficher l'interface (bouton autonome, hors zone centrale) ── */
+#ui-toggle {
+  position: fixed; z-index: 92;
+  bottom: calc(env(safe-area-inset-bottom,0px) + .9rem);
+  right: calc(env(safe-area-inset-right,0px) + 1rem);
+  display: flex; align-items: center; gap: .4rem;
+  width: 36px; height: 36px; justify-content: center; padding: 0;
+  border-radius: 100px; background: rgba(10,9,7,.5);
+  border: 1px solid rgba(212,180,131,.25); color: var(--gold-bright);
+  cursor: pointer; pointer-events: auto;
+  transition: background .25s, width .3s var(--ease-soft);
+}
+#ui-toggle:hover { background: rgba(212,180,131,.16); border-color: var(--gold); }
+#ui-toggle svg { width: 17px; height: 17px; stroke: var(--gold-bright); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+.ui-toggle-label { display: none; font-family: 'Lato', sans-serif; font-size: .55rem; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap; }
+body.ui-hidden #ui-toggle { width: auto; height: 34px; padding: 0 .95rem; background: rgba(10,9,7,.72); }
+body.ui-hidden .ui-toggle-label { display: inline; }
+body.ui-hidden #ui-toggle .ic-hide path:last-child { display: none; }  /* enlève le trait → œil ouvert */
+/* en mode caché : toute l'UI disparaît sauf le toggle (les zones de navigation restent actives) */
+body.ui-hidden #top, body.ui-hidden #bottom, body.ui-hidden .nav-btn,
+body.ui-hidden .back-btn, body.ui-hidden #upload-btn, body.ui-hidden #coc-btn,
+body.ui-hidden #swipe-hint, body.ui-hidden #media-tag, body.ui-hidden #progress {
+  opacity: 0 !important; pointer-events: none !important;
 }
 
 /* ── Stickers (emojis posés sur les photos, partagés par tous) ── */
@@ -674,7 +733,7 @@ body.sticker-mode #sticker-layer::before {
   border-top: 1px solid rgba(212,180,131,.2);
 }
 body.sticker-mode #sticker-bar { display: flex; }
-body.sticker-mode #coc-btn { opacity: 0; pointer-events: none; }   /* pas de Clash par-dessus la palette */
+body.sticker-mode #coc-btn { opacity: 0 !important; pointer-events: none; }   /* pas de Clash par-dessus la palette */
 .sk-emojis { flex: 1; display: flex; gap: .25rem; overflow-x: auto; -webkit-overflow-scrolling: touch; padding: .15rem; scrollbar-width: none; }
 .sk-emojis::-webkit-scrollbar { display: none; }
 .sk-emoji {
@@ -1221,6 +1280,14 @@ body.sticker-mode #coc-btn { opacity: 0; pointer-events: none; }   /* pas de Cla
     <div class="sk-emojis" id="sk-emojis"></div>
     <button id="sk-done" type="button">OK</button>
   </div>
+  <div id="filter-bar">
+    <div class="flt-chips" id="flt-chips"></div>
+  </div>
+
+  <button id="ui-toggle" aria-label="Cacher l'interface">
+    <svg class="ic-hide" viewBox="0 0 24 24" fill="none"><path d="M2 12s3.6-6.6 10-6.6 10 6.6 10 6.6-3.6 6.6-10 6.6S2 12 2 12z"/><circle cx="12" cy="12" r="2.6"/><path d="M3.5 3.5l17 17"/></svg>
+    <span class="ui-toggle-label">réafficher l'interface</span>
+  </button>
 
   <div id="ui">
     <div id="progress"></div>
@@ -1913,18 +1980,56 @@ function togglePause() {
   }
 }
 
-/* Filtre pellicule (mémorisé sur l'appareil) */
-let filmOn = false;
-function toggleFilm() {
-  filmOn = !filmOn;
-  $('album-view').classList.toggle('film', filmOn);
-  $('film-btn').classList.toggle('on', filmOn);
-  try { localStorage.setItem('film_on', filmOn ? '1' : ''); } catch (e) {}
+/* Filtres photo (sélecteur ; choix mémorisé sur l'appareil) */
+const FILTERS = [
+  { key: 'none', name: 'Aucun' },
+  { key: 'argentique', name: 'Argentique' },
+  { key: 'creme', name: 'Crème' },
+  { key: 'polaroid', name: 'Polaroïd' },
+  { key: 'dore', name: 'Doré' },
+  { key: 'bw', name: 'Noir & blanc' },
+  { key: 'froid', name: 'Froid' },
+  { key: 'vhs', name: 'VHS' },
+  { key: 'drama', name: 'Dramatique' },
+];
+let currentFilter = 'none', filterBarOpen = false;
+function setFilter(key) {
+  const av = $('album-view');
+  FILTERS.forEach(f => av.classList.remove('flt-' + f.key));
+  av.classList.add('flt-' + key);
+  av.classList.toggle('filtered', key !== 'none');
+  currentFilter = key;
+  document.querySelectorAll('#flt-chips .flt-chip').forEach(c => c.classList.toggle('on', c.dataset.k === key));
+  try { localStorage.setItem('photo_filter', key); } catch (e) {}
 }
-function applyFilmPref() {
-  try { filmOn = !!localStorage.getItem('film_on'); } catch (e) { filmOn = false; }
-  $('album-view').classList.toggle('film', filmOn);
-  $('film-btn').classList.toggle('on', filmOn);
+function buildFilterChips() {
+  const box = $('flt-chips'); box.innerHTML = '';
+  FILTERS.forEach(f => {
+    const c = document.createElement('button');
+    c.className = 'flt-chip' + (f.key === currentFilter ? ' on' : '');
+    c.type = 'button'; c.dataset.k = f.key; c.textContent = f.name;
+    c.addEventListener('click', () => setFilter(f.key));
+    box.appendChild(c);
+  });
+}
+function toggleFilterBar() {
+  filterBarOpen = !filterBarOpen;
+  if (filterBarOpen && !$('flt-chips').children.length) buildFilterChips();
+  document.body.classList.toggle('filter-open', filterBarOpen);
+  $('film-btn').classList.toggle('on', filterBarOpen);
+}
+function applyFilterPref() {
+  let k = 'none'; try { k = localStorage.getItem('photo_filter') || 'none'; } catch (e) {}
+  if (!FILTERS.some(f => f.key === k)) k = 'none';
+  setFilter(k);
+}
+
+/* Cacher / réafficher toute l'interface (pour une vue plein écran de la photo) */
+let uiHidden = false;
+function toggleUI() {
+  uiHidden = !uiHidden;
+  document.body.classList.toggle('ui-hidden', uiHidden);
+  $('ui-toggle').setAttribute('aria-label', uiHidden ? "Réafficher l'interface" : "Cacher l'interface");
 }
 
 /* ─────────────────────── MUSIQUE ─────────────────────── */
@@ -2953,6 +3058,8 @@ function enterGame() {
 function goHome() {
   cancelAnimationFrame(gRAF);   // stoppe la boucle du jeu si on en sortait
   pauseAlbum();
+  uiHidden = false; document.body.classList.remove('ui-hidden');   // l'UI réapparaît
+  if (filterBarOpen) { filterBarOpen = false; document.body.classList.remove('filter-open'); }
   showScreen('home');
   resumeMusicIfOn();   // en revenant de la Clip Farm, la musique reprend
 }
@@ -3073,8 +3180,9 @@ function bindEvents() {
 
   // Vue d'ensemble
   $('pause-btn').addEventListener('click', e => { e.stopPropagation(); togglePause(); resetIdle(); });
-  $('film-btn').addEventListener('click', e => { e.stopPropagation(); toggleFilm(); resetIdle(); });
-  applyFilmPref();
+  $('film-btn').addEventListener('click', e => { e.stopPropagation(); toggleFilterBar(); resetIdle(); });
+  applyFilterPref();
+  $('ui-toggle').addEventListener('click', e => { e.stopPropagation(); toggleUI(); });
   $('sk-btn').addEventListener('click', e => { e.stopPropagation(); toggleStickerMode(); resetIdle(); });
   $('sk-done').addEventListener('click', e => { e.stopPropagation(); toggleStickerMode(); });
   $('sticker-layer').addEventListener('pointerdown', e => { if (stickerMode) { e.preventDefault(); placeSticker(e.clientX, e.clientY); } });
