@@ -520,6 +520,11 @@ html, body {
 }
 @keyframes targetIn { from { transform: translate(-50%,-50%) scale(.3); opacity: 0; } to { transform: translate(-50%,-50%) scale(1); opacity: 1; } }
 
+/* iOS : police ≥ 16px sur les champs → empêche le zoom/bug de focus au tap (notamment en PWA) */
+#game-pseudo, #cm-name, #cm-text, #ca-name, #ca-desc { font-size: 16px; }
+/* Pas de bouton Clash par-dessus le Mini Jeu ni la Clip Farm (évite qu'il masque les champs) */
+#game.on ~ #coc-btn, #clip.on ~ #coc-btn { display: none !important; }
+
 /* ════════════════════════════════════════════════
    BOUTON RETOUR MENU
 ════════════════════════════════════════════════ */
@@ -2003,7 +2008,7 @@ function activate(i, silent, dir = 'next') {
 }
 
 function goTo(i, dir) {
-  if (!albumRunning || commentsOpen || stickerMode) return;   // pas de changement pendant commentaire/stickers
+  if (!albumRunning || commentsOpen || stickerMode || filterBarOpen) return;   // pas de changement pendant commentaire/stickers/choix de filtre
   const n = MEDIA.length;
   const newIdx = ((i % n) + n) % n;
   if (!dir) {
@@ -3058,7 +3063,11 @@ function chooseGame(key) {
   $('game-canvas').style.display = 'none';
   $('game-login').classList.remove('game-hidden');
   gState = 'login';
-  setTimeout(() => $('game-pseudo').focus(), 60);
+  // Focus SYNCHRONE dans le geste du clic → indispensable pour que le clavier
+  // remonte en mode application iOS (un setTimeout casserait la chaîne du geste).
+  const inp = $('game-pseudo');
+  try { inp.focus({ preventScroll: true }); } catch (_) { inp.focus(); }
+  setTimeout(() => { try { inp.focus({ preventScroll: true }); } catch (_) { inp.focus(); } }, 80); // fallback
 }
 
 function showGameMenu() {
@@ -3072,6 +3081,7 @@ async function startGame(key) {
   currentGame = key;
   $('game-menu').classList.add('game-hidden');
   $('game-over').classList.add('game-hidden');
+  $('game-login').classList.add('game-hidden');   // ← bug : le pseudo restait par-dessus le jeu
   gBest = await fetchBest(gPseudo, key);
   if (key === 'flappy') {
     stopMini();
@@ -3383,9 +3393,14 @@ function bindEvents() {
   });
 
   const sv = $('album-view');
-  sv.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; touchY = e.touches[0].clientY; }, { passive: true });
+  let swipeOk = true;
+  const NO_SWIPE = '#filter-bar, #sticker-bar, #comments, #bottom, #top, .back-btn, #upload-btn, #ui-toggle, #coc-btn';
+  sv.addEventListener('touchstart', e => {
+    touchX = e.touches[0].clientX; touchY = e.touches[0].clientY;
+    swipeOk = !(e.target.closest && e.target.closest(NO_SWIPE));   // pas de swipe-photo si on touche une barre/bouton
+  }, { passive: true });
   sv.addEventListener('touchend', e => {
-    if (!albumRunning) return;
+    if (!albumRunning || !swipeOk) return;
     const dx = e.changedTouches[0].clientX - touchX;
     const dy = e.changedTouches[0].clientY - touchY;
     if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy)) {
