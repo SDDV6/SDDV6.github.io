@@ -180,6 +180,7 @@ html, body {
   color: var(--cream); line-height: .95; margin: .15em 0 .35em;
   text-shadow: 0 0 60px rgba(212,180,131,.38), 0 6px 50px rgba(0,0,0,.85);
   animation: heroReveal 1.4s var(--ease-soft) .35s both;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;  /* tap secret (journal) sans sélection de texte */
 }
 .home-sub {
   font-family: 'Cormorant Garamond', serif;
@@ -986,6 +987,41 @@ body.sticker-mode #coc-btn { opacity: 0 !important; pointer-events: none; }   /*
 .mk-row .mk-ic { color: #0a84ff; }
 .mk-cap { margin-top: .55rem; font-family: 'Lato', sans-serif; font-size: .56rem; letter-spacing: .12em; text-transform: uppercase; color: rgba(248,236,220,.5); text-align: center; }
 
+/* ── Journal des connexions (option cachée : 4 taps sur le titre) ── */
+#visits {
+  position: fixed; inset: 0; z-index: 97; background: rgba(4,4,4,.82);
+  display: flex; align-items: center; justify-content: center; padding: 1rem;
+  opacity: 0; visibility: hidden; transition: opacity .3s var(--ease-soft), visibility .3s;
+}
+#visits.on { opacity: 1; visibility: visible; }
+.visits-box {
+  width: 100%; max-width: 440px; max-height: 86vh; display: flex; flex-direction: column;
+  background: linear-gradient(180deg, #181206, #0c0906);
+  border: 1px solid rgba(212,180,131,.3); border-radius: 20px;
+  padding: 1.4rem 1.2rem calc(1.2rem + env(safe-area-inset-bottom,0px));
+  box-shadow: 0 22px 64px rgba(0,0,0,.62);
+  transform: translateY(14px) scale(.98); transition: transform .3s var(--ease-soft);
+}
+#visits.on .visits-box { transform: translateY(0) scale(1); }
+.visits-title { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; font-size: 1.6rem; color: var(--cream); text-align: center; }
+.visits-sub { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1rem; color: rgba(248,236,220,.7); text-align: center; margin: .2rem 0 .9rem; }
+.visits-stat { font-family: 'Lato', sans-serif; font-size: .58rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--gold-bright); text-align: center; margin-bottom: .7rem; }
+.visits-list { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.visits-list::-webkit-scrollbar { width: 0; }
+.visit-row { display: flex; align-items: center; gap: .7rem; padding: .6rem .4rem; border-bottom: 1px solid rgba(212,180,131,.1); }
+.visit-row:last-child { border-bottom: none; }
+.visit-ic { font-size: 1.1rem; flex-shrink: 0; width: 1.6rem; text-align: center; }
+.visit-name { flex: 1; min-width: 0; font-family: 'Lato', sans-serif; font-size: .9rem; color: var(--cream); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.visit-name.anon { color: rgba(248,236,220,.5); font-style: italic; }
+.visit-when { flex-shrink: 0; font-family: 'Lato', sans-serif; font-size: .68rem; letter-spacing: .04em; color: rgba(248,236,220,.55); }
+.visits-empty { padding: 2rem 1rem; text-align: center; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1.05rem; color: rgba(248,236,220,.6); line-height: 1.5; }
+.visits-empty span { font-size: .85rem; opacity: .7; }
+.visits-close {
+  margin-top: 1rem; padding: .8rem; border-radius: 100px; cursor: pointer; flex-shrink: 0;
+  background: rgba(212,180,131,.08); border: 1px solid rgba(212,180,131,.3); color: var(--gold-bright);
+  font-family: 'Lato', sans-serif; font-size: .64rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+}
+
 #album-title {
   position: fixed; top: 30%; left: 50%; transform: translate(-50%, -50%);
   z-index: 24; pointer-events: none; text-align: center; max-width: 82%;
@@ -1418,7 +1454,7 @@ body.sticker-mode #coc-btn { opacity: 0 !important; pointer-events: none; }   /*
   <div class="home-scrim"></div>
   <div class="home-content">
     <div class="home-kicker">Guette les photos fils</div>
-    <h1 class="home-title">Mines Nancy</h1>
+    <h1 class="home-title" id="home-title">Mines Nancy</h1>
     <div class="home-sub">en sah la villageoise clash of clan — édition de ta grande tante</div>
     <div class="home-insic">'les gens forts seront ceux qui pourront écouter leur tournevis ou truc comme ça je sais plus c'était quoi la phrase...'</div>
 
@@ -1736,6 +1772,16 @@ body.sticker-mode #coc-btn { opacity: 0 !important; pointer-events: none; }   /*
     </div>
 
     <button class="ig-close" id="ig-close" type="button">C'est compris</button>
+  </div>
+</div>
+
+<!-- ══════════ JOURNAL DES CONNEXIONS (caché : 4 taps sur le titre) ══════════ -->
+<div id="visits" aria-hidden="true">
+  <div class="visits-box" role="dialog" aria-modal="true" aria-label="Journal des connexions">
+    <div class="visits-title">Qui est venu ?</div>
+    <div class="visits-sub">Les dernières personnes à avoir ouvert le site.</div>
+    <div class="visits-list" id="visits-list"></div>
+    <button class="visits-close" id="visits-close" type="button">Fermer</button>
   </div>
 </div>
 
@@ -2692,6 +2738,7 @@ async function postComment() {
   const name = ($('cm-name').value.trim() || 'Anonyme').slice(0, 24);
   const key = commentKey;
   try { localStorage.setItem('cm_name', name === 'Anonyme' ? '' : name); } catch (e) {}
+  rememberName(name);       // pseudo connu → connexions nommées dans le journal
   $('cm-send').disabled = true;
   const row = { author: name, body: text.slice(0, 280), created_at: new Date().toISOString() };
   try {
@@ -3363,6 +3410,7 @@ async function gameDoLogin() {
   const p = $('game-pseudo').value.trim().replace(/\s+/g, ' ').slice(0, 18);
   if (!p) { $('game-login-msg').textContent = 'écris un pseudo'; return; }
   gPseudo = p;
+  rememberName(p);          // pseudo connu → connexions nommées dans le journal
   startGame(pendingGame);   // lance directement le jeu choisi avant le pseudo
 }
 
@@ -3551,6 +3599,95 @@ function setupInstallBanner() {
   if (seen) b.classList.add('seen');                   // déjà consulté → pas de pulsation tape-à-l'œil
 }
 
+/* ─────────────────────── JOURNAL DES CONNEXIONS ─────────────────────── */
+const VISITS_TABLE = 'visits';
+let currentVisitId = null, visitNamed = false;
+
+function deviceId() {
+  let id = null;
+  try { id = localStorage.getItem('mn_device'); } catch (e) {}
+  if (!id) {
+    id = 'd' + Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
+    try { localStorage.setItem('mn_device', id); } catch (e) {}
+  }
+  return id;
+}
+function knownName() {
+  try { return (localStorage.getItem('mn_name') || localStorage.getItem('cm_name') || '').trim(); }
+  catch (e) { return ''; }
+}
+/* Mémorise le pseudo dès qu'on en connaît un (jeu, commentaire) → connexions nommées. */
+function rememberName(n) {
+  n = (n || '').trim().slice(0, 24);
+  if (!n || n.toLowerCase() === 'anonyme') return;
+  try { localStorage.setItem('mn_name', n); } catch (e) {}
+  if (currentVisitId && !visitNamed) { visitNamed = true; patchVisitName(currentVisitId, n); }
+}
+function shortUA() {
+  const u = navigator.userAgent || '';
+  if (/iphone|ipad|ipod/i.test(u)) return 'iPhone';
+  if (/android/i.test(u))          return 'Android';
+  if (/macintosh|mac os/i.test(u)) return 'Mac';
+  if (/windows/i.test(u))          return 'Windows';
+  return 'Autre';
+}
+async function logVisit() {
+  try { if (Date.now() - (+(localStorage.getItem('mn_lastlog') || 0)) < 30 * 60 * 1000) return; } catch (e) {}
+  const nm = knownName();
+  try {
+    const res = await fetch(`${SUPABASE.url}/rest/v1/${VISITS_TABLE}`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE.anonKey, Authorization: `Bearer ${SUPABASE.anonKey}`, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+      body: JSON.stringify({ device_id: deviceId(), name: nm || null, ua: shortUA() }),
+    });
+    try { localStorage.setItem('mn_lastlog', String(Date.now())); } catch (e) {}
+    if (res.ok) { const rows = await res.json(); if (rows && rows[0]) { currentVisitId = rows[0].id; visitNamed = !!nm; } }
+  } catch (e) { /* table absente / hors-ligne → silencieux */ }
+}
+async function patchVisitName(id, name) {
+  try {
+    await fetch(`${SUPABASE.url}/rest/v1/${VISITS_TABLE}?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: { apikey: SUPABASE.anonKey, Authorization: `Bearer ${SUPABASE.anonKey}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({ name }),
+    });
+  } catch (e) {}
+}
+async function openVisitsLog() {
+  $('visits').classList.add('on');
+  $('visits').setAttribute('aria-hidden', 'false');
+  const list = $('visits-list');
+  list.innerHTML = '<div class="visits-empty">chargement…</div>';
+  try {
+    const res = await fetch(`${SUPABASE.url}/rest/v1/${VISITS_TABLE}?select=name,ua,device_id,created_at&order=created_at.desc&limit=80`,
+      { headers: { apikey: SUPABASE.anonKey, Authorization: `Bearer ${SUPABASE.anonKey}` } });
+    if (!res.ok) throw new Error('get');
+    renderVisits(await res.json());
+  } catch (e) {
+    list.innerHTML = '<div class="visits-empty">Rien à afficher pour l\'instant.<br><span>(crée la table « visits » dans Supabase pour activer le journal)</span></div>';
+  }
+}
+function closeVisitsLog() { $('visits').classList.remove('on'); $('visits').setAttribute('aria-hidden', 'true'); }
+function renderVisits(rows) {
+  const list = $('visits-list');
+  list.innerHTML = '';
+  if (!rows || !rows.length) { list.innerHTML = '<div class="visits-empty">Personne ne s\'est encore connecté.</div>'; return; }
+  const people = new Set(rows.map(r => (r.name && r.name.trim()) ? r.name.trim().toLowerCase() : ('anon:' + r.device_id)));
+  const stat = document.createElement('div'); stat.className = 'visits-stat';
+  stat.textContent = `${rows.length} connexion${rows.length > 1 ? 's' : ''} · ${people.size} personne${people.size > 1 ? 's' : ''}`;
+  list.appendChild(stat);
+  const icon = ua => ua === 'iPhone' ? '📱' : ua === 'Android' ? '🤖' : (ua === 'Mac' || ua === 'Windows') ? '💻' : '🌐';
+  rows.forEach(r => {
+    const nm = (r.name && r.name.trim()) ? r.name.trim() : 'Anonyme';
+    const row = document.createElement('div'); row.className = 'visit-row';
+    const ic = document.createElement('span'); ic.className = 'visit-ic'; ic.textContent = icon(r.ua);
+    const name = document.createElement('span'); name.className = 'visit-name' + (nm === 'Anonyme' ? ' anon' : ''); name.textContent = nm;  // textContent = anti-XSS
+    const when = document.createElement('span'); when.className = 'visit-when'; when.textContent = timeAgo(r.created_at);
+    row.append(ic, name, when);
+    list.appendChild(row);
+  });
+}
+
 /* ─────────────────────── ÉVÉNEMENTS ─────────────────────── */
 function bindEvents() {
   $('card-album').addEventListener('click', enterAlbum);
@@ -3633,6 +3770,18 @@ function bindEvents() {
   $('install-guide').addEventListener('click', e => { if (e.target === $('install-guide')) closeInstallGuide(); });
   document.querySelectorAll('.ig-tab').forEach(t => t.addEventListener('click', () => switchInstallTab(t.dataset.os)));
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('install-guide').classList.contains('on')) closeInstallGuide(); });
+
+  // Journal des connexions — déclencheur CACHÉ : 4 taps rapides sur le titre « Mines Nancy »
+  let titleTaps = 0, titleTapT = null;
+  $('home-title').addEventListener('click', () => {
+    titleTaps++;
+    clearTimeout(titleTapT);
+    titleTapT = setTimeout(() => { titleTaps = 0; }, 1200);
+    if (titleTaps >= 4) { titleTaps = 0; openVisitsLog(); }
+  });
+  $('visits-close').addEventListener('click', closeVisitsLog);
+  $('visits').addEventListener('click', e => { if (e.target === $('visits')) closeVisitsLog(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('visits').classList.contains('on')) closeVisitsLog(); });
 
   // Créer ton album
   $('card-create').addEventListener('click', openCreateAlbum);
@@ -3719,6 +3868,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   buildSlides();
   bindEvents();
   setupInstallBanner();                           // bandeau « Installer l'application » (caché si déjà installée)
+  logVisit();                                     // journal des connexions (non bloquant ; silencieux si table absente)
   loadCommentCounts();                            // pastilles de commentaires (1 requête, non bloquant)
   loadStickers();                                 // stickers posés sur les photos (1 requête, non bloquant)
   loadAlbums();                                   // cartes des albums créés par les visiteurs
