@@ -1936,14 +1936,21 @@ const albumStore = {};       // { main: [...], <id>: [...] }
 let currentAlbumKey = 'main';
 let createdAlbums = [];      // métadonnées des albums créés (nom, description, id)
 
-function addToCurrentAlbum(item) { MEDIA.push(item); appendSlide(MEDIA.length - 1, item); }
+function addToCurrentAlbum(item) {
+  MEDIA.unshift(item);                  // le nouvel ajout passe EN TÊTE (plus récent = affiché en premier)
+  clearTimeout(autoTimer);
+  const v = document.querySelector('.slide.active video.slide-media'); if (v) cleanupVideo(v);
+  buildSlides();                        // réindexe toutes les slides (slide-0 = le nouvel ajout)
+  idx = 0;
+  if (albumRunning) activate(0, false, 'next');   // montre tout de suite la photo/vidéo ajoutée
+}
 
 /* Cible d'upload selon la zone ET l'album courant : table Supabase + champs + bouton + affichage.
    Un seul pipeline sert l'album principal, la Clip Farm ET les albums créés. */
 function zoneTarget(zoneKey) {
   if (zoneKey === 'clip') {
     return { table: 'clip_uploads', extra: null, btn: 'clip-upload-btn', label: 'Ajoute ton clip',
-             add: it => { CLIP_MEDIA.push(it); clipAddCell(CLIP_MEDIA.length - 1, it); } };
+             add: it => { CLIP_MEDIA.unshift(it); buildClipGrid(); } };   // nouveau clip en premier
   }
   const main = currentAlbumKey === 'main';
   return { table: main ? SUPABASE.table : 'album_media',
@@ -2471,7 +2478,7 @@ async function fetchUploads(zone) {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 4000);
     const res = await fetch(
-      `${SUPABASE.url}/rest/v1/${table}?select=type,url,caption&order=id.asc`,
+      `${SUPABASE.url}/rest/v1/${table}?select=type,url,caption&order=id.desc`,   // plus RÉCENT d'abord
       { headers: { apikey: SUPABASE.anonKey, Authorization: `Bearer ${SUPABASE.anonKey}` }, signal: ctrl.signal }
     );
     clearTimeout(t);
@@ -2856,13 +2863,61 @@ function getActiveGrade() {
   return (!g || g === 'none') ? '' : g;
 }
 
-/* "Cuit" le filtre dans l'image : dessine le blob sur un canvas avec ctx.filter (mêmes
-   fonctions CSS que l'écran), renvoie un blob JPEG filtré — ou null si le navigateur ne
-   sait pas filtrer un canvas (→ on garde alors l'image d'origine, sans planter). */
+/* Le canvas sait-il VRAIMENT filtrer ? Safari iOS < 17 expose parfois ctx.filter
+   sans l'appliquer → on teste pour de vrai (blanc × brightness(0) doit donner noir). */
+let _ctxFilterOK = null;
+function ctxFilterWorks() {
+  if (_ctxFilterOK !== null) return _ctxFilterOK;
+  try {
+    const c = document.createElement('canvas'); c.width = c.height = 1;
+    const x = c.getContext('2d');
+    if (!('filter' in x)) { _ctxFilterOK = false; return false; }
+    x.filter = 'brightness(0)'; x.fillStyle = '#fff'; x.fillRect(0, 0, 1, 1);
+    _ctxFilterOK = (x.getImageData(0, 0, 1, 1).data[0] === 0);
+  } catch (e) { _ctxFilterOK = false; }
+  return _ctxFilterOK;
+}
+
+/* Repli universel (sans ctx.filter) : applique la chaîne de filtres CSS directement
+   sur les pixels. Couvre sepia/grayscale/saturate/hue-rotate/brightness/contrast.
+   Matrices = spec CSS Filter Effects → rendu identique à l'écran, même sur vieux iPhone. */
+function applyCssFilterToData(data, grade) {
+  const re = /([\w-]+)\(([^)]*)\)/g, ops = [];
+  let m;
+  while ((m = re.exec(grade))) {
+    const fn = m[1].toLowerCase(), raw = m[2].trim();
+    const v = fn === 'hue-rotate' ? parseFloat(raw) * Math.PI / 180
+            : (raw.endsWith('%') ? parseFloat(raw) / 100 : parseFloat(raw));
+    if (isNaN(v)) continue;
+    if (fn === 'brightness' || fn === 'contrast') { ops.push({ fn, v }); continue; }
+    let mm = null;
+    if (fn === 'grayscale') { const a = 1 - Math.min(1, v);
+      mm = [0.2126+0.7874*a,0.7152-0.7152*a,0.0722-0.0722*a, 0.2126-0.2126*a,0.7152+0.2848*a,0.0722-0.0722*a, 0.2126-0.2126*a,0.7152-0.7152*a,0.0722+0.9278*a]; }
+    else if (fn === 'sepia') { const a = 1 - Math.min(1, v);
+      mm = [0.393+0.607*a,0.769-0.769*a,0.189-0.189*a, 0.349-0.349*a,0.686+0.314*a,0.168-0.168*a, 0.272-0.272*a,0.534-0.534*a,0.131+0.869*a]; }
+    else if (fn === 'saturate') { const s = v;
+      mm = [0.213+0.787*s,0.715-0.715*s,0.072-0.072*s, 0.213-0.213*s,0.715+0.285*s,0.072-0.072*s, 0.213-0.213*s,0.715-0.715*s,0.072+0.928*s]; }
+    else if (fn === 'hue-rotate') { const c = Math.cos(v), s = Math.sin(v);
+      mm = [0.213+c*0.787-s*0.213,0.715-c*0.715-s*0.715,0.072-c*0.072+s*0.928, 0.213-c*0.213+s*0.143,0.715+c*0.285+s*0.140,0.072-c*0.072-s*0.283, 0.213-c*0.213-s*0.787,0.715-c*0.715+s*0.715,0.072+c*0.928+s*0.072]; }
+    if (mm) ops.push({ fn: 'matrix', m: mm });
+  }
+  if (!ops.length) return;
+  for (let i = 0; i < data.length; i += 4) {
+    let r = data[i], g = data[i+1], b = data[i+2];
+    for (let o = 0; o < ops.length; o++) {
+      const op = ops[o];
+      if (op.fn === 'brightness') { r*=op.v; g*=op.v; b*=op.v; }
+      else if (op.fn === 'contrast') { r=(r-127.5)*op.v+127.5; g=(g-127.5)*op.v+127.5; b=(b-127.5)*op.v+127.5; }
+      else { const M=op.m, nr=M[0]*r+M[1]*g+M[2]*b, ng=M[3]*r+M[4]*g+M[5]*b, nb=M[6]*r+M[7]*g+M[8]*b; r=nr; g=ng; b=nb; }
+    }
+    data[i]=r; data[i+1]=g; data[i+2]=b;   // Uint8ClampedArray borne tout seul à [0,255]
+  }
+}
+
+/* "Cuit" le filtre dans l'image téléchargée : ctx.filter si dispo, sinon repli pixel
+   par pixel (→ marche AUSSI sur les vieux iPhone). Renvoie un blob JPEG filtré. */
 function bakeFilter(blob, grade) {
   return new Promise((resolve, reject) => {
-    const test = document.createElement('canvas').getContext('2d');
-    if (!test || !('filter' in test)) { resolve(null); return; }   // trop vieux → repli
     const objURL = URL.createObjectURL(blob);                       // même origine → ne "tainte" pas le canvas
     const img = new Image();
     img.onload = () => {
@@ -2871,8 +2926,15 @@ function bakeFilter(blob, grade) {
         const canvas = document.createElement('canvas');
         canvas.width = w; canvas.height = h;
         const ctx = canvas.getContext('2d');
-        ctx.filter = grade;                                         // ex. "sepia(.34) saturate(.72)…"
-        ctx.drawImage(img, 0, 0, w, h);
+        if (ctxFilterWorks()) {
+          ctx.filter = grade;                                       // rapide (navigateurs récents)
+          ctx.drawImage(img, 0, 0, w, h);
+        } else {
+          ctx.drawImage(img, 0, 0, w, h);                           // repli universel
+          const id = ctx.getImageData(0, 0, w, h);
+          applyCssFilterToData(id.data, grade);
+          ctx.putImageData(id, 0, 0);
+        }
         URL.revokeObjectURL(objURL);
         canvas.toBlob(b => resolve(b), 'image/jpeg', 0.92);
       } catch (e) { URL.revokeObjectURL(objURL); reject(e); }
@@ -2986,7 +3048,7 @@ async function fetchAlbums() {
 }
 async function fetchAlbumMedia(albumId) {
   try {
-    const res = await fetch(`${SUPABASE.url}/rest/v1/album_media?album_id=eq.${albumId}&select=type,url,caption&order=id.asc`,
+    const res = await fetch(`${SUPABASE.url}/rest/v1/album_media?album_id=eq.${albumId}&select=type,url,caption&order=id.desc`,
       { headers: { apikey: SUPABASE.anonKey, Authorization: `Bearer ${SUPABASE.anonKey}` } });
     if (!res.ok) return [];
     const rows = await res.json();
@@ -3881,8 +3943,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   loadTrack(0, false);
   buildFloatPhotos();
   const userUploads = await fetchUploads('album');   // tes 69 + tout ce qui a été ajouté depuis
-  MEDIA.push(...userUploads);
-  if (CONFIG.shuffle) shuffle(MEDIA);             // ordre aléatoire à chaque visite
+  if (CONFIG.shuffle) shuffle(MEDIA);             // variété sur les photos d'origine (placées après)
+  MEDIA = userUploads.concat(MEDIA);              // les images AJOUTÉES (plus récentes d'abord) passent EN PREMIER
   albumStore.main = MEDIA;                         // l'album principal sous la clé 'main'
   buildSlides();
   bindEvents();
