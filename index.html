@@ -874,6 +874,118 @@ body.sticker-mode #coc-btn { opacity: 0 !important; pointer-events: none; }   /*
 .card-create { border-style: dashed; }
 .card-create .card-icon { opacity: .85; }
 
+/* ════════════════════════════════════════════════
+   BANDEAU « INSTALLER L'APPLICATION » (PWA)
+   ════════════════════════════════════════════════ */
+#install-banner {
+  display: none;                       /* affiché par JS seulement si pas déjà installé */
+  width: 100%; max-width: 560px;
+  margin: clamp(1.5rem, 4.5vh, 2.2rem) auto 0;
+  align-items: center; gap: .85rem;
+  padding: .85rem 1.05rem;
+  background: linear-gradient(135deg, rgba(212,180,131,.18), rgba(184,150,100,.07));
+  border: 1px solid rgba(212,180,131,.55);
+  border-radius: 100px;
+  cursor: pointer; position: relative; overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  animation: fadeUp 1.2s var(--ease-soft) .75s both, installPulse 2.6s ease-in-out 1.6s 5;
+}
+#install-banner.show { display: flex; }
+#install-banner.seen { animation: fadeUp 1.2s var(--ease-soft) .75s both; }  /* calmé après 1ʳᵉ ouverture */
+#install-banner:active { transform: scale(.985); }
+.ib-ico {
+  flex-shrink: 0; width: 44px; height: 44px; border-radius: 13px;
+  display: grid; place-items: center; font-size: 1.4rem;
+  background: linear-gradient(180deg, rgba(212,180,131,.97), rgba(184,150,100,.97));
+  box-shadow: 0 6px 18px rgba(0,0,0,.42);
+}
+.ib-txt { text-align: left; flex: 1; min-width: 0; }
+.ib-txt b {
+  display: block; font-family: 'Playfair Display', serif; font-style: italic;
+  font-weight: 700; font-size: 1.14rem; color: var(--cream); line-height: 1.12;
+}
+.ib-txt span {
+  display: block; margin-top: .16rem; font-family: 'Lato', sans-serif;
+  font-size: .57rem; font-weight: 300; letter-spacing: .14em; text-transform: uppercase;
+  color: rgba(248,236,220,.62); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ib-arrow { flex-shrink: 0; color: var(--gold-bright); font-size: 1.2rem; opacity: .85; }
+@keyframes installPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(212,180,131,0); border-color: rgba(212,180,131,.5); }
+  50%      { box-shadow: 0 0 28px 2px rgba(212,180,131,.34); border-color: rgba(232,207,160,.95); }
+}
+
+/* ── Modal : guide d'installation ── */
+#install-guide {
+  position: fixed; inset: 0; z-index: 96; background: rgba(4,4,4,.82);
+  display: flex; align-items: center; justify-content: center; padding: 1rem;
+  opacity: 0; visibility: hidden; transition: opacity .3s var(--ease-soft), visibility .3s;
+}
+#install-guide.on { opacity: 1; visibility: visible; }
+.ig-box {
+  width: 100%; max-width: 460px; max-height: 88vh; overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; text-align: center;
+  background: linear-gradient(180deg, #181206, #0c0906);
+  border: 1px solid rgba(212,180,131,.3); border-radius: 20px;
+  padding: 1.5rem 1.25rem calc(1.4rem + env(safe-area-inset-bottom,0px));
+  box-shadow: 0 22px 64px rgba(0,0,0,.62);
+  transform: translateY(14px) scale(.98); transition: transform .3s var(--ease-soft);
+}
+#install-guide.on .ig-box { transform: translateY(0) scale(1); }
+.ig-box::-webkit-scrollbar { width: 0; }
+.ig-title { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; font-size: 1.65rem; color: var(--cream); }
+.ig-sub { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1.02rem; color: rgba(248,236,220,.75); margin: .25rem 0 1.1rem; }
+.ig-tabs { display: flex; gap: .5rem; margin-bottom: 1.2rem; }
+.ig-tab {
+  flex: 1; padding: .62rem; border-radius: 100px; cursor: pointer;
+  font-family: 'Lato', sans-serif; font-size: .62rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  background: rgba(212,180,131,.07); border: 1px solid rgba(212,180,131,.28); color: rgba(248,236,220,.72);
+  transition: background .2s, color .2s, border-color .2s;
+}
+.ig-tab.on { background: var(--gold-bright); border-color: var(--gold-bright); color: #1a140c; }
+.ig-pane { display: none; }
+.ig-pane.on { display: block; animation: fadeUp .4s var(--ease-soft) both; }
+.ig-step { display: flex; gap: .75rem; align-items: flex-start; text-align: left; margin-bottom: 1.05rem; }
+.ig-num {
+  flex-shrink: 0; width: 27px; height: 27px; border-radius: 50%;
+  display: grid; place-items: center; font-family: 'Lato', sans-serif; font-weight: 700; font-size: .82rem;
+  background: var(--gold-bright); color: #1a140c;
+}
+.ig-stxt { flex: 1; font-family: 'Lato', sans-serif; font-size: .82rem; line-height: 1.5; color: rgba(248,236,220,.88); }
+.ig-stxt b { color: var(--gold-bright); font-weight: 700; }
+.ig-note {
+  margin: .2rem 0 1.1rem; padding: .7rem .85rem; border-radius: 12px; text-align: left;
+  background: rgba(212,180,131,.06); border: 1px solid rgba(212,180,131,.18);
+  font-family: 'Lato', sans-serif; font-size: .72rem; line-height: 1.5; color: rgba(248,236,220,.7);
+}
+.ig-note b { color: var(--gold-bright); }
+.ig-close {
+  width: 100%; margin-top: .3rem; padding: .82rem; border-radius: 100px; cursor: pointer;
+  background: linear-gradient(180deg, rgba(212,180,131,.96), rgba(184,150,100,.96)); border: none; color: #1a140c;
+  font-family: 'Lato', sans-serif; font-size: .64rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+  transition: transform .2s;
+}
+.ig-close:hover { transform: translateY(-2px); }
+
+/* — maquettes d'écran recréées (style iOS / Android) — */
+.mk {
+  margin-top: .55rem; padding: .55rem; border-radius: 13px;
+  background: #1c1c1e; border: 1px solid rgba(255,255,255,.08);
+}
+.mk-bar { display: flex; align-items: center; justify-content: space-around; gap: .35rem; padding: .35rem .2rem; }
+.mk-ic { width: 23px; height: 23px; color: #8e8e93; flex-shrink: 0; }
+.mk-ic.blue { color: #0a84ff; }
+.mk-hl { border-radius: 9px; padding: .32rem; box-shadow: 0 0 0 2px var(--gold-bright); }
+.mk-url { flex: 1; background: #2c2c2e; border-radius: 9px; padding: .42rem .7rem; color: #c8c8cd; font-family: 'Lato', sans-serif; font-size: .72rem; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mk-sheet { background: #1c1c1e; border-radius: 13px; padding: .25rem .55rem; }
+.mk-row { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: .68rem .55rem; color: #e6e6ea; font-family: 'Lato', sans-serif; font-size: .8rem; }
+.mk-row + .mk-row { border-top: 1px solid rgba(255,255,255,.08); }
+.mk-row.dim { color: #76767c; }
+.mk-row.hl { box-shadow: 0 0 0 2px var(--gold-bright); border-radius: 9px; }
+.mk-row.hl + .mk-row { border-top: none; }
+.mk-row .mk-ic { color: #0a84ff; }
+.mk-cap { margin-top: .55rem; font-family: 'Lato', sans-serif; font-size: .56rem; letter-spacing: .12em; text-transform: uppercase; color: rgba(248,236,220,.5); text-align: center; }
+
 #album-title {
   position: fixed; top: 30%; left: 50%; transform: translate(-50%, -50%);
   z-index: 24; pointer-events: none; text-align: center; max-width: 82%;
@@ -1310,6 +1422,15 @@ body.sticker-mode #coc-btn { opacity: 0 !important; pointer-events: none; }   /*
     <div class="home-sub">en sah la villageoise clash of clan — édition de ta grande tante</div>
     <div class="home-insic">'les gens forts seront ceux qui pourront écouter leur tournevis ou truc comme ça je sais plus c'était quoi la phrase...'</div>
 
+    <div id="install-banner" role="button" tabindex="0" aria-label="Installer l'application">
+      <div class="ib-ico">📲</div>
+      <div class="ib-txt">
+        <b>Installer l'application</b>
+        <span>Mets Mines Nancy sur ton écran d'accueil</span>
+      </div>
+      <div class="ib-arrow">›</div>
+    </div>
+
     <div class="home-cards">
       <div class="card" id="card-album">
         <div class="card-icon">🎞️</div>
@@ -1534,6 +1655,87 @@ body.sticker-mode #coc-btn { opacity: 0 !important; pointer-events: none; }   /*
       <button id="ca-create" type="button">Créer</button>
     </div>
     <div id="ca-msg" class="ca-msg"></div>
+  </div>
+</div>
+
+<!-- ══════════ GUIDE D'INSTALLATION (PWA) ══════════ -->
+<div id="install-guide" aria-hidden="true">
+  <div class="ig-box" role="dialog" aria-modal="true" aria-label="Comment installer l'application">
+    <div class="ig-title">Installer l'application</div>
+    <div class="ig-sub">Mets Mines Nancy sur ton écran d'accueil — comme une vraie appli, sans rien payer.</div>
+
+    <div class="ig-tabs">
+      <button class="ig-tab" type="button" data-os="ios">iPhone / iPad</button>
+      <button class="ig-tab" type="button" data-os="android">Android</button>
+    </div>
+
+    <!-- iPhone / iPad -->
+    <div class="ig-pane" id="ig-ios">
+      <div class="ig-step">
+        <div class="ig-num">1</div>
+        <div class="ig-stxt">Ouvre le site dans <b>Safari</b>, puis appuie sur le bouton <b>Partager</b> (le carré avec une flèche vers le haut), en bas de l'écran.</div>
+      </div>
+      <div class="mk">
+        <div class="mk-bar">
+          <svg class="mk-ic blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg>
+          <svg class="mk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
+          <span class="mk-hl"><svg class="mk-ic blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14.5V3.5"/><path d="M8.5 7 12 3.5 15.5 7"/><path d="M7.6 10.5H6.2A1.7 1.7 0 0 0 4.5 12.2v6.6A1.7 1.7 0 0 0 6.2 20.5h11.6a1.7 1.7 0 0 0 1.7-1.7v-6.6a1.7 1.7 0 0 0-1.7-1.7H16.4"/></svg></span>
+          <svg class="mk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5zM20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5z"/></svg>
+          <svg class="mk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="13" height="13" rx="2"/><path d="M8 20h10a2 2 0 0 0 2-2V8"/></svg>
+        </div>
+        <div class="mk-cap">Barre de Safari · bouton Partager</div>
+      </div>
+
+      <div class="ig-step" style="margin-top:1.1rem">
+        <div class="ig-num">2</div>
+        <div class="ig-stxt">Fais défiler le menu et choisis <b>« Sur l'écran d'accueil »</b>.</div>
+      </div>
+      <div class="mk-sheet">
+        <div class="mk-row dim"><span>Ajouter aux favoris</span><svg class="mk-ic" viewBox="0 0 24 24" fill="none" stroke="#76767c" stroke-width="1.5"><path d="M12 4l2.3 4.7 5.2.8-3.8 3.7.9 5.1L12 16l-4.6 2.4.9-5.1L4.5 9.5l5.2-.8z"/></svg></div>
+        <div class="mk-row hl"><span>Sur l'écran d'accueil</span><svg class="mk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4.5" y="4.5" width="15" height="15" rx="4"/><path d="M12 9v6M9 12h6" stroke-linecap="round"/></svg></div>
+        <div class="mk-row dim"><span>Marquage</span><svg class="mk-ic" viewBox="0 0 24 24" fill="none" stroke="#76767c" stroke-width="1.5"><circle cx="12" cy="12" r="8"/></svg></div>
+      </div>
+      <div class="mk-cap">Menu Partager · « Sur l'écran d'accueil »</div>
+
+      <div class="ig-step" style="margin-top:1.1rem">
+        <div class="ig-num">3</div>
+        <div class="ig-stxt">Appuie sur <b>« Ajouter »</b> en haut à droite. C'est fait : l'icône apparaît sur ton écran d'accueil. 🎉</div>
+      </div>
+    </div>
+
+    <!-- Android -->
+    <div class="ig-pane" id="ig-android">
+      <div class="ig-step">
+        <div class="ig-num">1</div>
+        <div class="ig-stxt">Ouvre le site dans <b>Chrome</b>, puis appuie sur le <b>menu ⋮</b> (trois points), en haut à droite.</div>
+      </div>
+      <div class="mk">
+        <div class="mk-bar">
+          <span class="mk-url">🔒 sddv6.github.io</span>
+          <span class="mk-hl"><svg class="mk-ic blue" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span>
+        </div>
+        <div class="mk-cap">Barre de Chrome · menu ⋮</div>
+      </div>
+
+      <div class="ig-step" style="margin-top:1.1rem">
+        <div class="ig-num">2</div>
+        <div class="ig-stxt">Dans le menu, choisis <b>« Installer l'application »</b> (ou <b>« Ajouter à l'écran d'accueil »</b> selon le téléphone).</div>
+      </div>
+      <div class="mk-sheet">
+        <div class="mk-row dim"><span>Nouvel onglet</span><svg class="mk-ic" viewBox="0 0 24 24" fill="none" stroke="#76767c" stroke-width="1.6"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg></div>
+        <div class="mk-row hl"><span>Installer l'application</span><svg class="mk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 4v9M8.5 9.5 12 13l3.5-3.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19h14" stroke-linecap="round"/></svg></div>
+        <div class="mk-row dim"><span>Historique</span><svg class="mk-ic" viewBox="0 0 24 24" fill="none" stroke="#76767c" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2" stroke-linecap="round"/></svg></div>
+      </div>
+      <div class="mk-cap">Menu Chrome · « Installer l'application »</div>
+
+      <div class="ig-step" style="margin-top:1.1rem">
+        <div class="ig-num">3</div>
+        <div class="ig-stxt">Confirme avec <b>« Installer »</b>. L'icône apparaît sur ton écran d'accueil. 🎉</div>
+      </div>
+      <div class="ig-note"><b>Astuce :</b> sur beaucoup de téléphones, Chrome propose tout seul une petite bannière <b>« Installer »</b> en bas de l'écran — tu peux appuyer directement dessus.</div>
+    </div>
+
+    <button class="ig-close" id="ig-close" type="button">C'est compris</button>
   </div>
 </div>
 
@@ -2599,6 +2801,39 @@ async function saveReaction(media_key, emoji) {
 /* ─────────────────────── TÉLÉCHARGER LA PHOTO/VIDÉO COURANTE ───────────────────────
    iPhone : navigator.share({files}) ouvre la feuille de partage → « Enregistrer
    l'image / la vidéo » dans la galerie. PC & Android : repli <a download>. */
+/* Filtre actuellement appliqué, sous forme de chaîne CSS (--flt-grade), ou '' si aucun. */
+function getActiveGrade() {
+  if (currentFilter === 'none') return '';
+  const g = getComputedStyle($('album-view')).getPropertyValue('--flt-grade').trim();
+  return (!g || g === 'none') ? '' : g;
+}
+
+/* "Cuit" le filtre dans l'image : dessine le blob sur un canvas avec ctx.filter (mêmes
+   fonctions CSS que l'écran), renvoie un blob JPEG filtré — ou null si le navigateur ne
+   sait pas filtrer un canvas (→ on garde alors l'image d'origine, sans planter). */
+function bakeFilter(blob, grade) {
+  return new Promise((resolve, reject) => {
+    const test = document.createElement('canvas').getContext('2d');
+    if (!test || !('filter' in test)) { resolve(null); return; }   // trop vieux → repli
+    const objURL = URL.createObjectURL(blob);                       // même origine → ne "tainte" pas le canvas
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.filter = grade;                                         // ex. "sepia(.34) saturate(.72)…"
+        ctx.drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(objURL);
+        canvas.toBlob(b => resolve(b), 'image/jpeg', 0.92);
+      } catch (e) { URL.revokeObjectURL(objURL); reject(e); }
+    };
+    img.onerror = () => { URL.revokeObjectURL(objURL); reject(new Error('img load')); };
+    img.src = objURL;
+  });
+}
+
 async function downloadCurrent() {
   const item = MEDIA[idx];
   if (!item) return;
@@ -2614,9 +2849,19 @@ async function downloadCurrent() {
   try {
     const resp = await fetch(url, { mode: 'cors' });
     if (!resp.ok) throw new Error('http ' + resp.status);
-    const blob = await resp.blob();
-    const ext = ((blob.type.split('/')[1] || '').split(';')[0]) || (item.type === 'video' ? 'mp4' : 'jpg');
-    const name = `mines-nancy-${String(idx + 1).padStart(2, '0')}.${ext}`;
+    let blob = await resp.blob();
+    let ext = ((blob.type.split('/')[1] || '').split(';')[0]) || (item.type === 'video' ? 'mp4' : 'jpg');
+
+    // Filtre actif + PHOTO → on "cuit" le filtre dans le fichier téléchargé.
+    // (Les vidéos ne sont jamais filtrées à l'écran → on les laisse intactes ; "Aucun" aussi.)
+    let fltSuffix = '';
+    const grade = getActiveGrade();
+    if (item.type !== 'video' && grade) {
+      const baked = await bakeFilter(blob, grade).catch(() => null);
+      if (baked) { blob = baked; ext = 'jpg'; fltSuffix = '-' + currentFilter; }
+    }
+
+    const name = `mines-nancy-${String(idx + 1).padStart(2, '0')}${fltSuffix}.${ext}`;
     const file = new File([blob], name, { type: blob.type || 'application/octet-stream' });
 
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -3266,6 +3511,46 @@ function resetIdle() {
 }
 function showNav() { document.querySelectorAll('.nav-btn').forEach(b => b.classList.add('show')); }
 
+/* ─────────────────────── INSTALLATION (PWA) ─────────────────────── */
+function isAppInstalled() {
+  return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+      || window.navigator.standalone === true;          // iOS Safari "ajouté à l'accueil"
+}
+function detectOS() {
+  const ua = navigator.userAgent || '';
+  if (/android/i.test(ua)) return 'android';
+  if (/iphone|ipad|ipod/i.test(ua)) return 'ios';
+  if (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1) return 'ios';  // iPadOS récent = "Mac" tactile
+  return 'ios';   // défaut : la grande majorité des visiteurs sont sur iPhone
+}
+function switchInstallTab(os) {
+  document.querySelectorAll('.ig-tab').forEach(t => t.classList.toggle('on', t.dataset.os === os));
+  $('ig-ios').classList.toggle('on', os === 'ios');
+  $('ig-android').classList.toggle('on', os === 'android');
+  const box = document.querySelector('#install-guide .ig-box');
+  if (box) box.scrollTop = 0;
+}
+function openInstallGuide() {
+  switchInstallTab(detectOS());
+  $('install-guide').classList.add('on');
+  $('install-guide').setAttribute('aria-hidden', 'false');
+  try { localStorage.setItem('install_seen', '1'); } catch (_) {}
+  $('install-banner').classList.add('seen');          // une fois ouvert, on calme la pulsation
+}
+function closeInstallGuide() {
+  $('install-guide').classList.remove('on');
+  $('install-guide').setAttribute('aria-hidden', 'true');
+}
+function setupInstallBanner() {
+  if (isAppInstalled()) return;                        // déjà installée → inutile d'afficher le bandeau
+  const b = $('install-banner');
+  if (!b) return;
+  b.classList.add('show');
+  let seen = false;
+  try { seen = localStorage.getItem('install_seen') === '1'; } catch (_) {}
+  if (seen) b.classList.add('seen');                   // déjà consulté → pas de pulsation tape-à-l'œil
+}
+
 /* ─────────────────────── ÉVÉNEMENTS ─────────────────────── */
 function bindEvents() {
   $('card-album').addEventListener('click', enterAlbum);
@@ -3339,6 +3624,15 @@ function bindEvents() {
     else if (e.key === 'ArrowLeft') clipLightGo(-1);
     else if (e.key === 'Escape') closeClipLight();
   });
+
+  // Installer l'application (PWA)
+  const ib = $('install-banner');
+  ib.addEventListener('click', openInstallGuide);
+  ib.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openInstallGuide(); } });
+  $('ig-close').addEventListener('click', closeInstallGuide);
+  $('install-guide').addEventListener('click', e => { if (e.target === $('install-guide')) closeInstallGuide(); });
+  document.querySelectorAll('.ig-tab').forEach(t => t.addEventListener('click', () => switchInstallTab(t.dataset.os)));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('install-guide').classList.contains('on')) closeInstallGuide(); });
 
   // Créer ton album
   $('card-create').addEventListener('click', openCreateAlbum);
@@ -3424,6 +3718,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   albumStore.main = MEDIA;                         // l'album principal sous la clé 'main'
   buildSlides();
   bindEvents();
+  setupInstallBanner();                           // bandeau « Installer l'application » (caché si déjà installée)
   loadCommentCounts();                            // pastilles de commentaires (1 requête, non bloquant)
   loadStickers();                                 // stickers posés sur les photos (1 requête, non bloquant)
   loadAlbums();                                   // cartes des albums créés par les visiteurs
