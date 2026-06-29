@@ -180,7 +180,8 @@ html, body {
   color: var(--cream); line-height: .95; margin: .15em 0 .35em;
   text-shadow: 0 0 60px rgba(212,180,131,.38), 0 6px 50px rgba(0,0,0,.85);
   animation: heroReveal 1.4s var(--ease-soft) .35s both;
-  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;  /* tap secret (journal) sans sélection de texte */
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;  /* geste secret (journal) sans sélection de texte */
+  touch-action: manipulation;   /* supprime le délai/zoom double-tap → taps fiables */
 }
 .home-sub {
   font-family: 'Cormorant Garamond', serif;
@@ -3771,14 +3772,32 @@ function bindEvents() {
   document.querySelectorAll('.ig-tab').forEach(t => t.addEventListener('click', () => switchInstallTab(t.dataset.os)));
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('install-guide').classList.contains('on')) closeInstallGuide(); });
 
-  // Journal des connexions — déclencheur CACHÉ : 4 taps rapides sur le titre « Mines Nancy »
-  let titleTaps = 0, titleTapT = null;
-  $('home-title').addEventListener('click', () => {
-    titleTaps++;
-    clearTimeout(titleTapT);
-    titleTapT = setTimeout(() => { titleTaps = 0; }, 1200);
-    if (titleTaps >= 4) { titleTaps = 0; openVisitsLog(); }
-  });
+  // Journal des connexions — déclencheurs CACHÉS sur le titre « Mines Nancy » :
+  //   • appui long (~0,6 s)  OU  • 4 taps rapides. (pointer events = fiable sur mobile)
+  (() => {
+    const t = $('home-title');
+    if (!t) return;
+    let taps = 0, tapReset = null, lpTimer = null, downX = 0, downY = 0, longFired = false;
+    const open = () => { taps = 0; clearTimeout(tapReset); openVisitsLog(); };
+    const cancelLP = () => clearTimeout(lpTimer);
+    t.addEventListener('pointerdown', e => {
+      longFired = false; downX = e.clientX; downY = e.clientY;
+      clearTimeout(lpTimer);
+      lpTimer = setTimeout(() => { longFired = true; open(); }, 600);     // appui long
+    });
+    t.addEventListener('pointermove', e => {
+      if (Math.abs(e.clientX - downX) > 12 || Math.abs(e.clientY - downY) > 12) cancelLP();  // c'est un scroll
+    });
+    t.addEventListener('pointercancel', cancelLP);
+    t.addEventListener('pointerup', () => {
+      clearTimeout(lpTimer);
+      if (longFired) return;                       // déjà ouvert par l'appui long
+      taps++;
+      clearTimeout(tapReset);
+      tapReset = setTimeout(() => { taps = 0; }, 1500);
+      if (taps >= 4) open();                        // 4 taps rapides
+    });
+  })();
   $('visits-close').addEventListener('click', closeVisitsLog);
   $('visits').addEventListener('click', e => { if (e.target === $('visits')) closeVisitsLog(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('visits').classList.contains('on')) closeVisitsLog(); });
