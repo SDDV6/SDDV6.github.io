@@ -1,17 +1,25 @@
 name: keepalive-supabase
 
 # But : empêcher la mise en veille du projet Supabase (gratuit → pause après ~7 jours
-# d'inactivité). Cette action interroge la base tous les 2 jours, ce qui la garde active.
-# Elle commit aussi un petit horodatage pour que GitHub ne désactive PAS ce workflow
+# d'inactivité). Une simple LECTURE ne suffit plus : le projet a été mis en pause le
+# 14/09/2026 alors que ce ping tournait. On fait donc chaque jour une vraie ÉCRITURE
+# (mise à jour de la ligne unique de la table "keepalive") + une lecture des photos.
+# En plus, une tâche pg_cron interne à Supabase ("keepalive-interne") écrit toutes les 6 h.
+# Le workflow commit aussi un petit horodatage pour que GitHub ne le désactive PAS
 # (GitHub coupe les workflows planifiés après 60 jours sans activité du dépôt).
 
 on:
   schedule:
-    - cron: '17 6 */2 * *'   # ~tous les 2 jours à 06:17 UTC
+    - cron: '17 6 * * *'     # tous les jours à 06:17 UTC
   workflow_dispatch:          # bouton "Run workflow" dans l'onglet Actions (test manuel)
 
 permissions:
   contents: write
+
+env:
+  SUPABASE_URL: https://fupekhowetudiaglbuiz.supabase.co
+  # clé "anon public" — sans danger d'être publique
+  SUPABASE_ANON: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1cGVraG93ZXR1ZGlhZ2xidWl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5NDkwODEsImV4cCI6MjA5NzUyNTA4MX0.XW7zY72WI6UnBuhE4_wUplSh-Ma3aq93u3eo2WTD77c
 
 jobs:
   ping:
@@ -20,12 +28,17 @@ jobs:
       - name: Récupère le dépôt
         uses: actions/checkout@v4
 
-      - name: Réveille la base Supabase
+      - name: Réveille la base Supabase (écriture + lecture)
         run: |
-          # clé "anon public" — sans danger d'être publique
-          curl -fsS \
-            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1cGVraG93ZXR1ZGlhZ2xidWl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5NDkwODEsImV4cCI6MjA5NzUyNTA4MX0.XW7zY72WI6UnBuhE4_wUplSh-Ma3aq93u3eo2WTD77c" \
-            "https://fupekhowetudiaglbuiz.supabase.co/rest/v1/uploads?select=id&limit=1"
+          H1="apikey: $SUPABASE_ANON"
+          H2="Authorization: Bearer $SUPABASE_ANON"
+          curl -fsS --retry 3 --retry-delay 20 -X PATCH -H "$H1" -H "$H2" \
+            -H "Content-Type: application/json" -H "Prefer: return=representation" \
+            "$SUPABASE_URL/rest/v1/keepalive?id=eq.1" \
+            -d "{\"pinged_at\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"source\":\"github\"}"
+          echo ""
+          curl -fsS --retry 3 --retry-delay 20 -H "$H1" -H "$H2" \
+            "$SUPABASE_URL/rest/v1/uploads?select=id&order=id.desc&limit=5"
           echo ""
           echo "Ping Supabase OK"
 
