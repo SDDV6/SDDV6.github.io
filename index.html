@@ -524,8 +524,155 @@ html, body {
 
 /* iOS : police ≥ 16px sur les champs → empêche le zoom/bug de focus au tap (notamment en PWA) */
 #game-pseudo, #cm-name, #cm-text, #ca-name, #ca-desc { font-size: 16px; }
-/* Pas de bouton Clash par-dessus le Mini Jeu ni la Clip Farm (évite qu'il masque les champs) */
-#game.on ~ #coc-btn, #clip.on ~ #coc-btn { display: none !important; }
+/* Pas de bouton Clash par-dessus le Mini Jeu, la Clip Farm ni le Caméscope */
+#game.on ~ #coc-btn, #clip.on ~ #coc-btn, #cam.on ~ #coc-btn { display: none !important; }
+
+/* Le menu des jeux peut défiler s'il dépasse (5 jeux) — centré quand il y a la place */
+#game-menu { justify-content: flex-start; }
+#game-menu .game-title { margin-top: auto; }
+#game-menu .game-menu-list { margin-bottom: auto; }
+
+/* ── Mémory du clan : retrouve les paires (avec les photos de l'album) ── */
+.mini-memory {
+  display: grid; grid-template-columns: repeat(4, min(20.5vw, 116px));
+  gap: .55rem; justify-content: center; align-content: center;
+  padding: calc(env(safe-area-inset-top,0px) + 7.4rem) .8rem calc(env(safe-area-inset-bottom,0px) + 2rem);
+  touch-action: manipulation;
+}
+.mem-card { aspect-ratio: 1; background: transparent; border: none; padding: 0; cursor: pointer; perspective: 520px; -webkit-tap-highlight-color: transparent; }
+.mem-in { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .32s var(--ease-soft); }
+.mem-card.open .mem-in, .mem-card.done .mem-in { transform: rotateY(180deg); }
+.mem-f, .mem-b { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 12px; }
+.mem-f {
+  background: linear-gradient(145deg, rgba(212,180,131,.22), rgba(212,180,131,.05));
+  border: 1px solid rgba(212,180,131,.4); display: grid; place-items: center;
+  font-size: clamp(1.2rem, 5vw, 1.7rem);
+}
+.mem-b {
+  transform: rotateY(180deg); background: #14100a center/cover no-repeat;
+  border: 1px solid rgba(212,180,131,.55); display: grid; place-items: center;
+  font-size: clamp(1.5rem, 6vw, 2.1rem);
+}
+.mem-card.done { pointer-events: none; }
+.mem-card.done .mem-in { opacity: .5; box-shadow: 0 0 16px rgba(212,180,131,.4); transition: transform .32s var(--ease-soft), opacity .5s ease .25s; }
+
+/* ── Le Quiz de la maison ── */
+.mini-quiz {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.05rem;
+  padding: calc(env(safe-area-inset-top,0px) + 7.4rem) 1.4rem calc(env(safe-area-inset-bottom,0px) + 2rem);
+  text-align: center; touch-action: manipulation;
+}
+.quiz-count { font-family: 'Lato', sans-serif; font-size: .6rem; letter-spacing: .16em; text-transform: uppercase; color: rgba(248,236,220,.5); }
+.quiz-q { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 600; font-size: clamp(1.25rem, 5.4vw, 1.8rem); color: var(--cream); max-width: 560px; }
+.quiz-choices { display: flex; flex-direction: column; gap: .6rem; width: min(86vw, 420px); }
+.quiz-choice {
+  padding: .85rem 1rem; border-radius: 100px; cursor: pointer;
+  border: 1px solid rgba(212,180,131,.35); background: rgba(212,180,131,.07);
+  color: rgba(248,236,220,.9); font-family: 'Lato', sans-serif; font-size: .84rem; letter-spacing: .04em;
+  transition: background .15s, border-color .15s, transform .1s;
+}
+.quiz-choice:active { transform: scale(.98); }
+.quiz-choice.good { background: rgba(80,200,120,.25); border-color: #50c878; color: #eafff2; }
+.quiz-choice.bad { background: rgba(255,59,48,.22); border-color: #ff3b30; color: #ffe9e7; }
+.quiz-choice:disabled { cursor: default; }
+
+/* ════════════════════════════════════════════════
+   LE CAMÉSCOPE — caméra du téléphone, habillage 2006
+   ════════════════════════════════════════════════ */
+#cam { background: #000; }
+#cam-feed { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #000; }
+#cam-feed.mirror { transform: scaleX(-1); }
+#cam-vhs {
+  position: absolute; inset: 0; pointer-events: none; z-index: 2;
+  background: repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 1px, transparent 1px 3px);
+  mix-blend-mode: overlay;
+}
+#cam-hud {
+  position: absolute; inset: 0; pointer-events: none; z-index: 3;
+  font-family: 'Courier New', monospace; font-weight: 700; color: #f2eee2;
+  text-shadow: 0 0 6px rgba(0,0,0,.85), 0 2px 4px rgba(0,0,0,.6);
+}
+.cam-rec {
+  position: absolute; top: calc(env(safe-area-inset-top,0px) + 4.5rem); left: 1.35rem;
+  display: flex; align-items: center; gap: .45rem; font-size: 1rem; letter-spacing: .12em;
+  opacity: 0; transition: opacity .2s;
+}
+#cam.recording .cam-rec { opacity: 1; }
+.cam-dot { width: .72rem; height: .72rem; border-radius: 50%; background: #ff3b30; animation: camBlink 1s steps(1) infinite; }
+@keyframes camBlink { 50% { opacity: .15; } }
+.cam-sp {
+  position: absolute; top: calc(env(safe-area-inset-top,0px) + 4.5rem); right: 1.35rem;
+  display: flex; align-items: center; gap: .55rem; font-size: .92rem; letter-spacing: .14em;
+}
+.cam-batt { display: inline-block; width: 1.45rem; height: .78rem; border: 2px solid #f2eee2; border-radius: 2px; position: relative; }
+.cam-batt::after { content: ''; position: absolute; right: -5px; top: 2px; width: 3px; height: calc(100% - 4px); background: #f2eee2; }
+.cam-batt i { position: absolute; inset: 2px; right: 36%; background: #f2eee2; }
+.cam-date { position: absolute; bottom: calc(env(safe-area-inset-bottom,0px) + 8.6rem); left: 1.35rem; font-size: .95rem; letter-spacing: .1em; }
+.cam-corner { position: absolute; width: 32px; height: 32px; border: 2.5px solid rgba(242,238,226,.8); }
+.cam-corner.tl { top: calc(env(safe-area-inset-top,0px) + 4rem); left: .85rem; border-right: none; border-bottom: none; }
+.cam-corner.tr { top: calc(env(safe-area-inset-top,0px) + 4rem); right: .85rem; border-left: none; border-bottom: none; }
+.cam-corner.bl { bottom: calc(env(safe-area-inset-bottom,0px) + 8rem); left: .85rem; border-right: none; border-top: none; }
+.cam-corner.br { bottom: calc(env(safe-area-inset-bottom,0px) + 8rem); right: .85rem; border-left: none; border-top: none; }
+
+#cam-controls {
+  position: absolute; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom,0px) + 1.4rem);
+  z-index: 4; display: flex; align-items: center; justify-content: center; gap: 2.1rem;
+}
+#cam-shot {
+  width: 74px; height: 74px; border-radius: 50%; cursor: pointer;
+  border: 4px solid rgba(255,255,255,.92); background: rgba(255,255,255,.22);
+  transition: transform .12s; -webkit-tap-highlight-color: transparent;
+}
+#cam-shot:active { transform: scale(.9); }
+#cam-flip, #cam-rec-btn {
+  width: 52px; height: 52px; border-radius: 50%; cursor: pointer;
+  border: 1px solid rgba(212,180,131,.45); background: rgba(10,9,7,.55);
+  color: #fff; font-size: 1.25rem; display: grid; place-items: center;
+  -webkit-tap-highlight-color: transparent;
+}
+#cam-rec-btn { color: #ff3b30; font-size: 1.55rem; }
+#cam.recording #cam-rec-btn { background: #ff3b30; color: #fff; border-color: #ff3b30; }
+#cam.recording #cam-shot, #cam.recording #cam-flip { opacity: .25; pointer-events: none; }
+
+#cam-flash { position: absolute; inset: 0; z-index: 5; background: #fff; opacity: 0; pointer-events: none; }
+#cam-flash.go { animation: camFlash .28s ease-out; }
+@keyframes camFlash { from { opacity: .85; } to { opacity: 0; } }
+
+#cam-error {
+  position: absolute; inset: 0; z-index: 6; padding: 2rem;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.1rem;
+  text-align: center; background: rgba(4,4,4,.9);
+  font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1.15rem; color: rgba(248,236,220,.85);
+}
+#cam-retry {
+  padding: .75rem 1.7rem; border-radius: 100px; cursor: pointer; border: none;
+  background: linear-gradient(180deg, rgba(212,180,131,.95), rgba(184,150,100,.95)); color: #1a140c;
+  font-family: 'Lato', sans-serif; font-size: .64rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+}
+#cam-review {
+  position: absolute; inset: 0; z-index: 7; display: flex; flex-direction: column;
+  background: rgba(4,4,4,.96); padding-top: calc(env(safe-area-inset-top,0px) + 3.8rem);
+}
+#cam-review-img, #cam-review-vid { flex: 1; min-height: 0; width: 100%; object-fit: contain; }
+.cam-review-btns { display: flex; flex-wrap: wrap; gap: .6rem; justify-content: center; padding: .9rem 1rem .5rem; }
+.cam-review-btns button {
+  padding: .78rem 1.1rem; border-radius: 100px; cursor: pointer;
+  font-family: 'Lato', sans-serif; font-size: .64rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+}
+#cam-again, #cam-save { background: rgba(212,180,131,.08); border: 1px solid rgba(212,180,131,.35); color: var(--gold-bright); }
+#cam-publish { background: linear-gradient(180deg, rgba(212,180,131,.95), rgba(184,150,100,.95)); border: none; color: #1a140c; }
+#cam-publish:disabled { opacity: .55; }
+#cam-status {
+  text-align: center; min-height: 1.3em; padding: 0 1rem calc(env(safe-area-inset-bottom,0px) + .9rem);
+  font-family: 'Lato', sans-serif; font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; color: var(--gold-bright);
+}
+
+/* ── Ken Burns : zoom cinéma très lent sur les photos de l'album ── */
+@media (prefers-reduced-motion: no-preference) {
+  #album-view .slide.active:not(.is-video) img.slide-media { animation: kenburns 10s ease-out forwards; }
+  #album-view .slide.leaving:not(.is-video) img.slide-media { transform: scale(1.05); }  /* pas de saut pendant le fondu */
+}
+@keyframes kenburns { from { transform: scale(1); } to { transform: scale(1.05); } }
 
 /* ════════════════════════════════════════════════
    BOUTON RETOUR MENU
@@ -1479,6 +1626,11 @@ body.sticker-mode #coc-btn { opacity: 0 !important; pointer-events: none; }   /*
         <div class="card-title">Clip Farm</div>
         <div class="card-desc">Le grand n'importe quoi · balance tes clips</div>
       </div>
+      <div class="card" id="card-cam">
+        <div class="card-icon">📼</div>
+        <div class="card-title">Le Caméscope</div>
+        <div class="card-desc">Filme comme en 2006 · direct dans la Clip Farm</div>
+      </div>
       <div class="card" id="card-game">
         <div class="card-icon">🎮</div>
         <div class="card-title">Mini Jeu</div>
@@ -1621,6 +1773,8 @@ body.sticker-mode #coc-btn { opacity: 0 !important; pointer-events: none; }   /*
       <button class="game-pick" type="button" data-g="flappy"><span class="gp-emoji">📹</span><span class="gp-txt"><b>Caméscope volant</b><i>vole et esquive les obstacles</i></span></button>
       <button class="game-pick" type="button" data-g="clicker"><span class="gp-emoji">👆</span><span class="gp-txt"><b>Tape-vite</b><i>un max de taps en 10 s</i></span></button>
       <button class="game-pick" type="button" data-g="targets"><span class="gp-emoji">🎯</span><span class="gp-txt"><b>Réflexe</b><i>touche les cibles en 20 s</i></span></button>
+      <button class="game-pick" type="button" data-g="memory"><span class="gp-emoji">🃏</span><span class="gp-txt"><b>Mémory du clan</b><i>retrouve les paires — avec NOS photos</i></span></button>
+      <button class="game-pick" type="button" data-g="quiz"><span class="gp-emoji">🧠</span><span class="gp-txt"><b>Le Quiz de la maison</b><i>8 questions sur nos légendes</i></span></button>
     </div>
   </div>
 
@@ -1650,6 +1804,46 @@ body.sticker-mode #coc-btn { opacity: 0 !important; pointer-events: none; }   /*
     </div>
     <div class="game-board-title" id="game-board-title">Classement du clan</div>
     <ol id="game-board" class="game-board"></ol>
+  </div>
+</div>
+
+<!-- ══════════ LE CAMÉSCOPE (caméra rétro → Clip Farm) ══════════ -->
+<div id="cam" class="screen">
+  <video id="cam-feed" autoplay playsinline muted></video>
+  <div id="cam-vhs"></div>
+  <div id="cam-hud">
+    <div class="cam-rec"><span class="cam-dot"></span>REC <span id="cam-rec-time">0:00</span></div>
+    <div class="cam-sp">SP <span class="cam-batt"><i></i></span></div>
+    <div class="cam-date" id="cam-date"></div>
+    <div class="cam-corner tl"></div><div class="cam-corner tr"></div>
+    <div class="cam-corner bl"></div><div class="cam-corner br"></div>
+  </div>
+  <div id="cam-flash"></div>
+
+  <button class="back-btn" id="back-cam" aria-label="Retour au menu">
+    <svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg> Menu
+  </button>
+
+  <div id="cam-controls">
+    <button id="cam-flip" type="button" aria-label="Changer de caméra">🔄</button>
+    <button id="cam-shot" type="button" aria-label="Prendre une photo"></button>
+    <button id="cam-rec-btn" type="button" aria-label="Filmer / arrêter">●</button>
+  </div>
+
+  <div id="cam-error" class="game-hidden">
+    <div id="cam-error-msg">Impossible d'ouvrir la caméra.</div>
+    <button id="cam-retry" type="button">Réessayer</button>
+  </div>
+
+  <div id="cam-review" class="game-hidden">
+    <img id="cam-review-img" alt="Ta capture">
+    <video id="cam-review-vid" class="game-hidden" playsinline controls></video>
+    <div class="cam-review-btns">
+      <button id="cam-again" type="button">↩ Reprendre</button>
+      <button id="cam-save" type="button">↓ Garder</button>
+      <button id="cam-publish" type="button">🌾 Publier dans la Clip Farm</button>
+    </div>
+    <div id="cam-status"></div>
   </div>
 </div>
 
@@ -2922,7 +3116,13 @@ function bakeFilter(blob, grade) {
     const img = new Image();
     img.onload = () => {
       try {
-        const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+        // ⚠️ iOS plafonne la taille/mémoire des canvas. Une photo iPhone fait 12 Mpx
+        // (3024×4032) → le canvas échouait en silence sur iPhone et l'image repartait
+        // SANS filtre. On borne donc le grand côté à 2048 px (3 Mpx, sûr partout ;
+        // qualité largement suffisante pour partager).
+        let w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+        const MAX = 2048, big = Math.max(w, h);
+        if (big > MAX) { const s = MAX / big; w = Math.round(w * s); h = Math.round(h * s); }
         const canvas = document.createElement('canvas');
         canvas.width = w; canvas.height = h;
         const ctx = canvas.getContext('2d');
@@ -2936,12 +3136,28 @@ function bakeFilter(blob, grade) {
           ctx.putImageData(id, 0, 0);
         }
         URL.revokeObjectURL(objURL);
-        canvas.toBlob(b => resolve(b), 'image/jpeg', 0.92);
+        exportCanvasJpeg(canvas, resolve, reject);
       } catch (e) { URL.revokeObjectURL(objURL); reject(e); }
     };
     img.onerror = () => { URL.revokeObjectURL(objURL); reject(new Error('img load')); };
     img.src = objURL;
   });
+}
+
+/* Export JPEG robuste : toBlob, et si iOS renvoie null (mémoire) → repli via toDataURL. */
+function exportCanvasJpeg(canvas, resolve, reject) {
+  const viaDataURL = () => {
+    try {
+      const durl = canvas.toDataURL('image/jpeg', 0.92);
+      const bin = atob(durl.split(',')[1]), len = bin.length, arr = new Uint8Array(len);
+      for (let i = 0; i < len; i++) arr[i] = bin.charCodeAt(i);
+      resolve(new Blob([arr], { type: 'image/jpeg' }));
+    } catch (e) { reject(e); }
+  };
+  try {
+    if (canvas.toBlob) canvas.toBlob(b => b ? resolve(b) : viaDataURL(), 'image/jpeg', 0.92);
+    else viaDataURL();
+  } catch (e) { viaDataURL(); }
 }
 
 async function downloadCurrent() {
@@ -3000,6 +3216,7 @@ function showScreen(name) {
   $('home').classList.toggle('on', name === 'home');
   $('clip').classList.toggle('on', name === 'clip');
   $('game').classList.toggle('on', name === 'game');
+  $('cam').classList.toggle('on', name === 'cam');
   $('album-view').classList.toggle('on', name === 'album');
 }
 
@@ -3447,11 +3664,15 @@ async function startGame(key) {
     gameDraw();
   } else if (key === 'clicker') { startClicker(); }
   else if (key === 'targets') { startTargets(); }
+  else if (key === 'memory')  { startMemory(); }
+  else if (key === 'quiz')    { startQuiz(); }
 }
 
 /* écran de fin générique, partagé par tous les jeux */
 function showOver(score) {
   gState = 'over';
+  const ttl = document.querySelector('#game-over .game-over-title');
+  if (ttl) ttl.textContent = currentGame === 'flappy' ? 'Perdu !' : 'Terminé !';   // les mini-jeux « finissent », le flappy « se perd »
   $('go-score').textContent = score;
   if (score > gBest) { gBest = score; saveBest(gPseudo, currentGame, gBest); }
   $('go-best').textContent = gBest;
@@ -3585,6 +3806,307 @@ function spawnTarget() {
   setTimeout(() => t.remove(), 1050);
 }
 
+/* ── Mémory du clan : 8 paires, 60 s — les cartes sont de VRAIES photos de l'album ── */
+let memFirst = null, memLock = false, memFound = 0;
+function startMemory() {
+  stopMini();
+  $('game-canvas').style.display = 'none';
+  memFirst = null; memLock = false; memFound = 0;
+  $('mini-score').textContent = '0/8'; $('mini-time').textContent = '60.0';
+  $('mini-hud').classList.remove('game-hidden');
+  const area = $('mini-area');
+  area.className = 'mini-memory'; area.innerHTML = '';
+
+  // 8 paires : miniatures Cloudinary de l'album principal ; complétées par des emojis si besoin
+  const pool = (albumStore.main || MEDIA).filter(m => m.type === 'image' && isCloudinary(m.src));
+  shuffle(pool);
+  const faces = pool.slice(0, 8).map(m => ({ img: thumbUrl(m) }));
+  const EMOJIS = ['🎞️','📼','🎥','📹','🎬','🌾','⛏️','💛'];
+  for (let i = 0; faces.length < 8; i++) faces.push({ em: EMOJIS[i % EMOJIS.length] });
+
+  const cards = [];
+  faces.forEach((f, p) => { cards.push({ p, f }, { p, f }); });
+  shuffle(cards);
+  cards.forEach(cd => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'mem-card'; b.dataset.p = cd.p;
+    const inner = document.createElement('div'); inner.className = 'mem-in';
+    const front = document.createElement('div'); front.className = 'mem-f'; front.textContent = '📼';
+    const back = document.createElement('div'); back.className = 'mem-b';
+    if (cd.f.img) back.style.backgroundImage = `url("${cd.f.img}")`; else back.textContent = cd.f.em;
+    inner.append(front, back); b.appendChild(inner);
+    b.onpointerdown = e => { e.preventDefault(); memFlip(b); };
+    area.appendChild(b);
+  });
+
+  gState = 'playing';
+  miniEndAt = performance.now() + 60000;
+  miniCountdown(() => showOver(memFound * 100));   // temps écoulé : 100 pts par paire trouvée
+}
+function memFlip(b) {
+  if (gState !== 'playing' || memLock || b.classList.contains('open') || b.classList.contains('done')) return;
+  b.classList.add('open');
+  if (!memFirst) { memFirst = b; return; }
+  const a = memFirst; memFirst = null;
+  if (a.dataset.p === b.dataset.p) {
+    a.classList.add('done'); b.classList.add('done');
+    memFound++; $('mini-score').textContent = memFound + '/8';
+    if (navigator.vibrate) { try { navigator.vibrate(18); } catch (e) {} }
+    if (memFound === 8) {   // toutes trouvées : bonus de temps restant
+      clearInterval(miniTimer);
+      const leftS = Math.max(0, Math.round((miniEndAt - performance.now()) / 1000));
+      showOver(800 + leftS * 10);
+    }
+  } else {
+    memLock = true;
+    setTimeout(() => { a.classList.remove('open'); b.classList.remove('open'); memLock = false; }, 650);
+  }
+}
+
+/* ── Le Quiz de la maison : les légendes du site (10 s par question) ── */
+const QUIZ = [
+  { q: "Quelle chanson ouvre l'album ?", c: ['Forever Young', 'Wonderwall', 'La Macarena', "L'aventurier"], a: 0 },
+  { q: "D'après l'accueil, les gens forts pourront écouter…", c: ['leur tournevis', 'leur marteau', 'la pluie', 'leur daron'], a: 0 },
+  { q: 'Comment s\'appelle la zone du grand n\'importe quoi ?', c: ['La Clip Farm', 'Le Zoo', 'La Décharge', 'Le Vestiaire'], a: 0 },
+  { q: 'Le QR code du site se cachait dans…', c: ['un caméscope', 'une boîte de céréales', 'une chaussette', 'un Kinder'], a: 0 },
+  { q: "Quelle école est la rivale jurée ?", c: ["l'INSIC", "l'ENSAIA", 'Polytech', 'AgroParisTech'], a: 0 },
+  { q: 'Dans le mini-jeu, on pilote…', c: ['un caméscope volant', 'un pigeon', 'une trottinette', 'un tournevis'], a: 0 },
+  { q: 'Le clan se retrouve sur…', c: ['Clash of Clans', 'Fortnite', 'Candy Crush', 'Mario Kart'], a: 0 },
+  { q: "L'album, c'est l'édition de…", c: ['ta grande tante', 'ton banquier', 'la préfète', 'ta DRH'], a: 0 },
+];
+let quizIdx = 0, quizScore = 0, quizList = [];
+function startQuiz() {
+  stopMini();
+  $('game-canvas').style.display = 'none';
+  quizIdx = 0; quizScore = 0;
+  quizList = QUIZ.map(x => {
+    const ch = x.c.map((t, i) => ({ t, ok: i === x.a }));
+    shuffle(ch);
+    return { q: x.q, ch };
+  });
+  shuffle(quizList);
+  $('mini-score').textContent = '0'; $('mini-time').textContent = '10.0';
+  $('mini-hud').classList.remove('game-hidden');
+  $('mini-area').className = 'mini-quiz';
+  gState = 'playing';
+  quizShow();
+}
+function quizShow() {
+  const area = $('mini-area');
+  area.innerHTML = '';
+  const item = quizList[quizIdx];
+  const count = document.createElement('div'); count.className = 'quiz-count';
+  count.textContent = `question ${quizIdx + 1} / ${quizList.length}`;
+  const q = document.createElement('div'); q.className = 'quiz-q'; q.textContent = item.q;
+  const box = document.createElement('div'); box.className = 'quiz-choices';
+  item.ch.forEach(ch => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'quiz-choice'; b.textContent = ch.t; b._ok = ch.ok;
+    b.onpointerdown = e => { e.preventDefault(); quizAnswer(ch, b); };
+    box.appendChild(b);
+  });
+  area.append(count, q, box);
+  clearInterval(miniTimer);
+  miniEndAt = performance.now() + 10000;
+  miniCountdown(() => quizAnswer(null, null));   // temps écoulé = pas de réponse
+}
+function quizAnswer(ch, btn) {
+  if (gState !== 'playing') return;
+  clearInterval(miniTimer);
+  const area = $('mini-area');
+  area.querySelectorAll('.quiz-choice').forEach(b => { b.disabled = true; });
+  if (ch && ch.ok) {
+    const leftS = Math.max(0, Math.round((miniEndAt - performance.now()) / 1000));
+    quizScore += 100 + leftS * 5;                        // bonne réponse + bonus de rapidité
+    $('mini-score').textContent = quizScore;
+    btn.classList.add('good');
+    if (navigator.vibrate) { try { navigator.vibrate(15); } catch (e) {} }
+  } else {
+    if (btn) btn.classList.add('bad');
+    const good = [...area.querySelectorAll('.quiz-choice')].find(b => b._ok);
+    if (good) good.classList.add('good');                // montre la bonne réponse
+  }
+  quizIdx++;
+  setTimeout(() => {
+    if (gState !== 'playing') return;                    // le joueur a quitté entre-temps
+    quizIdx < quizList.length ? quizShow() : showOver(quizScore);
+  }, 900);
+}
+
+/* ─────────────────────── LE CAMÉSCOPE (caméra → Clip Farm) ─────────────────────── */
+let camStream = null, camFacing = 'environment', camRec = null, camChunks = [];
+let camRecT0 = 0, camRecTick = null, camBlob = null, camBlobKind = '', camObjURL = null;
+
+function enterCam() {
+  pauseAlbum();
+  if (!audio.paused) audio.pause();          // pas de musique : le micro et le son priment
+  showScreen('cam');
+  $('cam-date').textContent = camDateStr();
+  $('cam-rec-btn').classList.toggle('game-hidden', !window.MediaRecorder);   // vidéo si le tel sait faire
+  camCloseReview();
+  initCamStream();
+}
+function camDateStr() {
+  const d = new Date();
+  const mois = ['JAN', 'FEV', 'MAR', 'AVR', 'MAI', 'JUIN', 'JUIL', 'AOUT', 'SEP', 'OCT', 'NOV', 'DEC'];
+  return `${mois[d.getMonth()]}. ${String(d.getDate()).padStart(2, '0')} ${d.getFullYear()}  ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+async function initCamStream(withAudio = false) {
+  stopCamStream();
+  $('cam-error').classList.add('game-hidden');
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    camFail("Ce navigateur ne donne pas accès à la caméra. Ouvre le site dans Safari ou Chrome.");
+    return;
+  }
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: camFacing, width: { ideal: 1920 }, height: { ideal: 1080 } },
+      audio: withAudio,
+    });
+    const v = $('cam-feed');
+    v.srcObject = camStream;
+    v.classList.toggle('mirror', camFacing === 'user');   // aperçu selfie en miroir (naturel)
+    await v.play().catch(() => {});
+  } catch (e) {
+    camFail("Impossible d'ouvrir la caméra. Autorise l'accès (réglages du navigateur), puis réessaie.");
+  }
+}
+function camFail(msg) { $('cam-error-msg').textContent = msg; $('cam-error').classList.remove('game-hidden'); }
+function stopCamStream() {
+  if (camRec && camRec.state !== 'inactive') { try { camRec.stop(); } catch (e) {} }
+  camRec = null;
+  clearInterval(camRecTick);
+  const c = $('cam'); if (c) c.classList.remove('recording');
+  if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+  const v = $('cam-feed'); if (v) v.srcObject = null;
+}
+function camFlipFacing() {
+  camFacing = camFacing === 'environment' ? 'user' : 'environment';
+  initCamStream();
+}
+
+/* Photo : capture l'image ET y incruste l'habillage caméscope (REC, date) */
+function camShoot() {
+  const v = $('cam-feed');
+  if (!camStream || !v.videoWidth) return;
+  let w = v.videoWidth, h = v.videoHeight;
+  const MAX = 1920, big = Math.max(w, h);
+  if (big > MAX) { const s = MAX / big; w = Math.round(w * s); h = Math.round(h * s); }   // limite canvas iOS
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d');
+  x.drawImage(v, 0, 0, w, h);
+  camBurnOverlay(x, w, h);
+  const fl = $('cam-flash'); fl.classList.remove('go'); void fl.offsetWidth; fl.classList.add('go');
+  c.toBlob(b => { if (b) camShowReview(b, 'image'); }, 'image/jpeg', .9);
+}
+function camBurnOverlay(x, w, h) {
+  const s = Math.max(w, h) * 0.026;
+  x.font = `700 ${Math.round(s)}px "Courier New", monospace`;
+  x.shadowColor = 'rgba(0,0,0,.75)'; x.shadowBlur = s * .35;
+  x.fillStyle = '#ff3b30';
+  x.beginPath(); x.arc(w * .06, h * .085 - s * .32, s * .34, 0, Math.PI * 2); x.fill();
+  x.fillStyle = '#f2eee2';
+  x.fillText('REC', w * .06 + s * .75, h * .085);
+  x.textAlign = 'right'; x.fillText('SP', w * .94, h * .085);
+  x.textAlign = 'left';  x.fillText(camDateStr(), w * .06, h * .945);
+  x.shadowBlur = 0;
+}
+
+/* Vidéo : 30 s max, s'arrête toute seule ; l'aperçu garde l'habillage à l'écran */
+function camToggleRec() {
+  if (!window.MediaRecorder) return;
+  if (camRec && camRec.state === 'recording') { camRec.stop(); return; }
+  startCamRec();
+}
+async function startCamRec() {
+  if (!camStream) return;
+  if (!camStream.getAudioTracks().length) await initCamStream(true);   // (ré)ouvre AVEC micro
+  if (!camStream) return;
+  camChunks = [];
+  let opts = {};
+  for (const mt of ['video/mp4', 'video/webm;codecs=vp9', 'video/webm']) {
+    if (window.MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(mt)) { opts = { mimeType: mt }; break; }
+  }
+  try { camRec = new MediaRecorder(camStream, opts); }
+  catch (e) {
+    try { camRec = new MediaRecorder(camStream); }
+    catch (e2) { camFail('La vidéo ne marche pas sur ce téléphone — mais la photo, oui !'); return; }
+  }
+  camRec.ondataavailable = e => { if (e.data && e.data.size) camChunks.push(e.data); };
+  camRec.onstop = () => {
+    clearInterval(camRecTick);
+    $('cam').classList.remove('recording');
+    const type = (camRec && camRec.mimeType) || 'video/webm';
+    camRec = null;
+    const blob = new Blob(camChunks, { type });
+    camChunks = [];
+    if (blob.size > 1000) camShowReview(blob, 'video');
+  };
+  camRec.start();
+  camRecT0 = performance.now();
+  $('cam').classList.add('recording');
+  $('cam-rec-time').textContent = '0:00';
+  camRecTick = setInterval(() => {
+    const sec = Math.floor((performance.now() - camRecT0) / 1000);
+    $('cam-rec-time').textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+    if (sec >= 30 && camRec && camRec.state === 'recording') camRec.stop();
+  }, 250);
+}
+
+/* Relecture : garder (galerie) ou publier (Clip Farm) */
+function camShowReview(blob, kind) {
+  camBlob = blob; camBlobKind = kind;
+  if (camObjURL) { URL.revokeObjectURL(camObjURL); camObjURL = null; }
+  camObjURL = URL.createObjectURL(blob);
+  const img = $('cam-review-img'), vid = $('cam-review-vid');
+  if (kind === 'image') {
+    img.src = camObjURL; img.classList.remove('game-hidden');
+    vid.classList.add('game-hidden'); vid.removeAttribute('src');
+  } else {
+    vid.src = camObjURL; vid.classList.remove('game-hidden');
+    img.classList.add('game-hidden'); img.removeAttribute('src');
+  }
+  $('cam-status').textContent = '';
+  $('cam-publish').disabled = false;
+  $('cam-review').classList.remove('game-hidden');
+}
+function camCloseReview() {
+  $('cam-review').classList.add('game-hidden');
+  const vid = $('cam-review-vid'); vid.pause && vid.pause();
+  if (camObjURL) { URL.revokeObjectURL(camObjURL); camObjURL = null; }
+  camBlob = null;
+}
+function camFileFromBlob() {
+  const ext = camBlobKind === 'image' ? 'jpg' : (/mp4/.test(camBlob.type) ? 'mp4' : 'webm');
+  const type = camBlob.type || (camBlobKind === 'image' ? 'image/jpeg' : 'video/webm');
+  return new File([camBlob], `camescope-${Date.now()}.${ext}`, { type });
+}
+async function camSave() {
+  if (!camBlob) return;
+  const file = camFileFromBlob();
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: 'Mines Nancy' }); } catch (e) {}
+  } else {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(camBlob); a.download = file.name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  }
+}
+async function camPublish() {
+  if (!camBlob || $('cam-publish').disabled) return;
+  $('cam-publish').disabled = true;
+  const st = $('cam-status');
+  st.textContent = 'envoi vers la Clip Farm…';
+  try { await loadClips(); } catch (e) {}   // évite un doublon si la Clip Farm n'a jamais été ouverte
+  const res = await uploadOne(camFileFromBlob(), f => { st.textContent = `envoi… ${Math.round(f * 100)}%`; }, 'clip');
+  if (res.ok) st.textContent = '✓ publié dans la Clip Farm !';
+  else {
+    st.textContent = res.reason === 'size' ? 'trop lourd (max 100 Mo)' : "échec de l'envoi — réessaie";
+    $('cam-publish').disabled = false;
+  }
+}
+
 function enterGame() {
   pauseAlbum();
   startMusicOnce(); resumeMusicIfOn();
@@ -3599,6 +4121,7 @@ function enterGame() {
 }
 function goHome() {
   cancelAnimationFrame(gRAF);   // stoppe la boucle du jeu si on en sortait
+  stopCamStream();              // coupe la caméra si on sortait du Caméscope
   pauseAlbum();
   uiHidden = false; document.body.classList.remove('ui-hidden');   // l'UI réapparaît
   if (filterBarOpen) { filterBarOpen = false; document.body.classList.remove('filter-open'); }
@@ -3771,8 +4294,12 @@ function bindEvents() {
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       if (!audio.paused) audio.pause();
-    } else if (musicOn && audio.paused) {
-      audio.play().catch(() => {});
+      stopCamStream();                                    // caméra coupée en arrière-plan (batterie + vie privée)
+    } else {
+      // au retour : la musique ne repart PAS dans la Clip Farm ni le Caméscope (le son des vidéos/du micro prime)
+      const silentZone = $('clip').classList.contains('on') || $('cam').classList.contains('on');
+      if (musicOn && audio.paused && !silentZone) audio.play().catch(() => {});
+      if ($('cam').classList.contains('on') && !camStream) initCamStream();   // le viseur se rallume
     }
   });
 
@@ -3872,6 +4399,17 @@ function bindEvents() {
   $('ca-name').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('ca-desc').focus(); } });
   $('ca-desc').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doCreateAlbum(); } });
 
+  // Le Caméscope
+  $('card-cam').addEventListener('click', enterCam);
+  $('back-cam').addEventListener('click', goHome);
+  $('cam-flip').addEventListener('click', camFlipFacing);
+  $('cam-shot').addEventListener('click', camShoot);
+  $('cam-rec-btn').addEventListener('click', camToggleRec);
+  $('cam-retry').addEventListener('click', () => initCamStream());
+  $('cam-again').addEventListener('click', camCloseReview);
+  $('cam-save').addEventListener('click', camSave);
+  $('cam-publish').addEventListener('click', camPublish);
+
   // Mini Jeu
   $('card-game').addEventListener('click', enterGame);
   $('back-game').addEventListener('click', goHome);
@@ -3954,6 +4492,15 @@ window.addEventListener('DOMContentLoaded', async () => {
   loadStickers();                                 // stickers posés sur les photos (1 requête, non bloquant)
   loadAlbums();                                   // cartes des albums créés par les visiteurs
   fetchTracks().then(t => { if (t.length) PLAYLIST.push(...t); });   // musiques ajoutées par les visiteurs
+
+  // Raccourcis d'app (appui long sur l'icône installée) : ?zone=album|clip|game|cam ouvre direct la zone
+  const zone = new URLSearchParams(location.search).get('zone');
+  if (zone) setTimeout(() => {
+    if      (zone === 'album') enterAlbum();
+    else if (zone === 'clip')  enterClip();
+    else if (zone === 'game')  enterGame();
+    else if (zone === 'cam')   enterCam();
+  }, 350);
 });
 </script>
 </body>
